@@ -2,7 +2,7 @@
 
 # grill-ui
 
-MCP server (Bun, `src/`) plus a prebuilt browser UI (Vite + React, `ui/`) for long grilling sessions. Read `README.md` for the design; this file is the part an agent must know before editing.
+MCP server (Bun, `src/`) plus a prebuilt browser UI (Vite + React, `ui/`) for long grilling sessions. Read `README.md` for the design, `CONTEXT.md` for the vocabulary (use those terms in code, docs and questions), and `docs/adr/` for the decisions that are deliberate and should not be "fixed". This file is the part an agent must know before editing. When a decision passes the ADR test (hard to reverse, surprising, a real trade-off), add `docs/adr/NNNN-slug.md`; when a term is settled, update `CONTEXT.md`.
 
 ## Definition of done
 
