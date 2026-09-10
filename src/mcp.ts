@@ -122,25 +122,25 @@ function formatAnswers(round: Round): string {
     .join("\n")
 }
 
-const ASIDE_BRIEFS: Record<
-  Aside["kind"],
-  { skill: string; brief: string; format: "markdown" | "html" }
-> = {
+/**
+ * What each aside kind asks for. The kind no longer fixes the `format`: since
+ * `show-me` became an external, markdown-first skill, the answer is whatever it
+ * turned out to be, and Claude names it on the call. See
+ * docs/adr/0006-html-asides-only-in-a-sandboxed-frame.md.
+ */
+const ASIDE_BRIEFS: Record<Aside["kind"], { skill: string; brief: string }> = {
   eli5: {
     brief:
       "Explain this question and its options like the reader knows nothing about the topic: a self-contained HTML fragment " +
       "with big simple pictures (inline SVG / emoji) and very few words, one concrete everyday analogy per option, and a " +
       "one-line 'so we pick…' for the recommendation. No scripts, no external resources, inline CSS only.",
-    format: "html",
     skill: "eli5",
   },
   "show-me": {
     brief:
-      "Make a visual for this question: a self-contained HTML fragment (inline <svg> and/or simple styled divs, inline CSS only, " +
-      "no external resources, no scripts) that shows the decision and how the options differ — e.g. a comparison table, a " +
-      "flow, an architecture sketch, a before/after. Mark the recommended option visually. Big shapes, few words. " +
-      "Dark background friendly (light text on dark or transparent).",
-    format: "html",
+      "Make a visual for this question: something that shows the decision and how the options differ — a comparison, a flow, " +
+      "an architecture sketch, a before/after — and mark the recommended option. Big shapes, few words. Either a ```mermaid " +
+      "block (it is drawn for real in the panel) or a self-contained HTML fragment with inline <svg> / styled divs.",
     skill: "show-me",
   },
   "wait-what": {
@@ -149,10 +149,14 @@ const ASIDE_BRIEFS: Record<
       "then restate the question, each option and your recommendation in ASD-STE100 Simplified Technical English: short " +
       "sentences, one idea per sentence, common words, active voice. Use the project's ubiquitous language (CONTEXT.md if present). " +
       "Do not add new options. Keep it under ~250 words.",
-    format: "markdown",
     skill: "wait-what",
   },
 }
+
+const FORMAT_RULE =
+  'Pick the format that matches what you produced: "markdown" for prose, code, tables or a ```mermaid diagram; ' +
+  '"html" for a fragment with inline CSS and no scripts or external resources, which renders in a sandboxed frame. ' +
+  "Deliver it through post_aside — never write a file, never open one."
 
 function asideInstruction(session: Session, aside: Aside): string {
   const round = session.rounds.find((r) => r.id === aside.roundId)
@@ -168,8 +172,9 @@ function asideInstruction(session: Session, aside: Aside): string {
     "",
     "Do this now:",
     `1. If the "${spec.skill}" skill is available, invoke it about this question. Otherwise follow this brief: ${spec.brief}`,
-    `2. Post the result with post_aside({ sessionId: "${session.id}", asideId: "${aside.id}", format: "${spec.format}", content }).`,
-    "3. Call wait_for_answers again for the round.",
+    `2. ${FORMAT_RULE}`,
+    `3. Post the result with post_aside({ sessionId: "${session.id}", asideId: "${aside.id}", format, content }).`,
+    "4. Call wait_for_answers again for the round.",
     "Do not answer in the terminal; the user is looking at the browser.",
   ].join("\n")
 }
@@ -405,7 +410,8 @@ server.registerTool(
   {
     description:
       "Send the content produced for an aside request into the contextual panel of the browser. " +
-      "format 'markdown' renders as rich text; 'html' renders in a sandboxed frame (inline SVG/CSS ok, no scripts).",
+      "format 'markdown' renders as rich text, and a ```mermaid block in it is drawn as a diagram; " +
+      "'html' renders in a sandboxed frame (inline SVG/CSS ok, no scripts). The format is yours to pick per aside.",
     inputSchema: {
       asideId: z.string(),
       content: z.string().min(1),

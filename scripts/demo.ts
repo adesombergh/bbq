@@ -144,15 +144,21 @@ const cannedAside: Record<
     format: "html",
   },
   "show-me": {
-    content: `<svg viewBox="0 0 640 260" width="100%" style="max-width:640px" font-family="system-ui" font-size="14">
-  <rect x="10" y="20" width="180" height="60" rx="8" fill="#1c2029" stroke="#2a2f3a"/><text x="100" y="45" text-anchor="middle" fill="#e6e8ee">Cron sweep</text><text x="100" y="65" text-anchor="middle" fill="#8b93a7">scan all every 15m</text>
-  <rect x="230" y="20" width="180" height="60" rx="8" fill="#f59e0b22" stroke="#f59e0b"/><text x="320" y="45" text-anchor="middle" fill="#e6e8ee">Delayed job ★</text><text x="320" y="65" text-anchor="middle" fill="#8b93a7">1 job per payment</text>
-  <rect x="450" y="20" width="180" height="60" rx="8" fill="#1c2029" stroke="#2a2f3a"/><text x="540" y="45" text-anchor="middle" fill="#e6e8ee">PSP webhook</text><text x="540" y="65" text-anchor="middle" fill="#8b93a7">provider calls us</text>
-  <g fill="#8b93a7"><text x="100" y="130" text-anchor="middle">latency: ≤15 min</text><text x="320" y="130" text-anchor="middle" fill="#34d399">latency: exact</text><text x="540" y="130" text-anchor="middle">latency: exact</text>
-  <text x="100" y="160" text-anchor="middle" fill="#34d399">deps: none</text><text x="320" y="160" text-anchor="middle" fill="#34d399">deps: BullMQ (have it)</text><text x="540" y="160" text-anchor="middle" fill="#f87171">deps: PSP support</text>
-  <text x="100" y="190" text-anchor="middle" fill="#f87171">hot spot: yes</text><text x="320" y="190" text-anchor="middle" fill="#34d399">hot spot: no</text><text x="540" y="190" text-anchor="middle" fill="#34d399">hot spot: no</text></g>
-</svg>`,
-    format: "html",
+    content:
+      "Three ways to start the second attempt, and what each one costs.\n\n" +
+      "```mermaid\n" +
+      "flowchart LR\n" +
+      '  F["Card payment fails<br/>retryable"]\n' +
+      '  A["Cron sweep<br/>≤15 min · hot spot"]\n' +
+      '  B["Delayed job ★<br/>exact · BullMQ, already here"]\n' +
+      '  C["PSP webhook<br/>exact · needs PSP support"]\n' +
+      '  R["Retry the payment"]\n' +
+      "  F --> A --> R\n" +
+      "  F --> B --> R\n" +
+      "  F --> C --> R\n" +
+      "```\n\n" +
+      "★ the recommendation: one timer per payment, on a queue we already run.",
+    format: "markdown",
   },
   "wait-what": {
     content:
@@ -189,7 +195,9 @@ async function pollRound(sessionId: string, roundId: string): Promise<string> {
     sessionId,
     timeoutMs: POLL_MS,
   })
-  const status = field(out, "status")
+  // `pending`/`answered`/`closed` come back as `status:`; an aside request
+  // leads with `outcome:` because it is an instruction, not a report.
+  const status = field(out, "status") ?? field(out, "outcome")
   if (status === "pending") {
     console.log(".")
     return await pollRound(sessionId, roundId)
@@ -218,7 +226,7 @@ async function runRounds(sessionId: string, index: number): Promise<void> {
   console.log(`\n--- round ${roundId} pushed`)
   const out = await pollRound(sessionId, roundId)
   console.log(out)
-  if (field(out, "status") === "closed") {
+  if ((field(out, "status") ?? field(out, "outcome")) === "closed") {
     process.exit(0)
   }
   await call("post_note", {

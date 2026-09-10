@@ -5,7 +5,7 @@ import { Plus, X } from "lucide-react"
 
 import { ASIDE_LABELS } from "@/components/aside-buttons"
 import { HtmlFrame } from "@/components/html-frame"
-import { Md } from "@/components/md"
+import { AsideMd } from "@/components/md"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -42,7 +42,7 @@ const AsideBody = ({ aside }: { aside: Aside }) => {
   if (aside.format === "html") {
     return <HtmlFrame html={aside.content ?? ""} />
   }
-  return <Md className="text-[15px]" text={aside.content ?? ""} />
+  return <AsideMd className="text-[15px]" text={aside.content ?? ""} />
 }
 
 const isAsideKind = (value: string): value is AsideKind =>

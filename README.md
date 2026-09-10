@@ -106,7 +106,10 @@ before answers so the user is never left staring at a spinner.
   three aside buttons).
 - The right panel is per question, tabbed by aside kind, closable (Esc).
   `markdown` asides render as rich text; `html` asides render in a sandboxed
-  frame (no scripts).
+  frame (no scripts). Claude picks the format per aside — the kind does not fix
+  it. A ```mermaid block in an aside is drawn: mermaid arrives through a lazy
+  `import()`, renders to an SVG string and goes through the same frame, and a
+  block that does not parse falls back to its source.
 
 ### Hard constraints honored
 
@@ -132,7 +135,7 @@ src/types.ts        shared types (imported by the UI as @shared/types)
 ui/                 Vite 8 + React 19 (React Compiler) + Tailwind v4, builds to ui/dist
   src/router.tsx    TanStack Router: / and /s/$sessionId (typed search params)
   src/lib/          Query options, WebSocket -> cache feeder (Pacer backoff), mutations, derivations
-  src/components/   Question card, round, aside panel, TanStack Form manual answer, markdown
+  src/components/   Question card, round, aside panel, TanStack Form manual answer, markdown, diagrams
   src/components/ui shadcn components on Base UI (ours to edit)
 scripts/demo.ts     fake Claude for manual testing
 skills/             grill-ui (the protocol Claude follows in the browser)
