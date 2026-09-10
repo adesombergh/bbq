@@ -31,15 +31,23 @@ Register the server in the project you grill from (or globally) — `.mcp.json`:
 ```
 
 Copy or symlink `skills/grill-ui` where your skills live (`.agents/skills`,
-`.claude/skills`…). The three aside kinds map to skills Claude may already have
-— `wait-what`, `eli5`, and `show-me`, which you can install with:
+`.claude/skills`…). Two of the three aside kinds can call an aside skill, both
+third party and both optional:
 
 ```sh
-npx skills add humanlayer/skills --skill show-me
+npx skills add humanlayer/skills --skill show-me   # Show me
+/plugin install eli5@claude-community              # ELI5
 ```
 
-All three are optional: the tool results carry an inline brief, so Claude still
-answers an aside when the skill is missing.
+**Wait, what?** has no skill: the one of that name in `mattpocock-skills` is
+`disable-model-invocation`, a slash command for you rather than something Claude
+can invoke, so its brief is the implementation.
+
+Nothing here is required. Every kind's brief in `src/aside-brief.ts` is the
+floor, not a fallback — Claude answers an aside from it alone, and where a skill
+would have done better it says so at the end of the aside with the command
+above. The browser never learns what you have installed
+(`docs/adr/0015-skill-availability-is-not-session-state.md`).
 
 Then: “grill me on X with the UI”.
 

@@ -90,6 +90,14 @@ _Avoid_: chart, graph, mermaid
 The aside that explains a question as if the reader knew nothing about the topic, with pictures and everyday analogies.
 _Avoid_: beginner mode, simple explanation
 
+**Brief**:
+The instructions a tool result carries for one aside kind: what to produce and, where a skill applies, which one and the exact command that installs it. A brief is the floor, not a fallback — every kind has one, an aside is always answered from it, and a skill only ever improves on it.
+_Avoid_: prompt, template, fallback, instructions
+
+**Aside skill**:
+An optional skill that answers one kind of aside better than its brief. Aside skills are third party and per machine; grill-ui bundles none. Available means invocable by Claude, which is narrower than installed: a skill can be present and enabled and still unreachable.
+_Avoid_: helper, integration, dependency
+
 **Note**:
 A free-form message from Claude shown between rounds: what the last answers settled, a lookup in progress, the shared understanding.
 _Avoid_: comment, message, status

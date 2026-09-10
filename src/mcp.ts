@@ -19,6 +19,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js"
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { z } from "zod"
 
+import { ASIDE_BRIEFS, briefStep } from "./aside-brief.ts"
 import { openBrowser } from "./browser.ts"
 import { startHub } from "./hub.ts"
 import { answeredCount } from "./round-rules.ts"
@@ -122,37 +123,6 @@ function formatAnswers(round: Round): string {
     .join("\n")
 }
 
-/**
- * What each aside kind asks for. The kind no longer fixes the `format`: since
- * `show-me` became an external, markdown-first skill, the answer is whatever it
- * turned out to be, and Claude names it on the call. See
- * docs/adr/0006-html-asides-only-in-a-sandboxed-frame.md.
- */
-const ASIDE_BRIEFS: Record<Aside["kind"], { skill: string; brief: string }> = {
-  eli5: {
-    brief:
-      "Explain this question and its options like the reader knows nothing about the topic: a self-contained HTML fragment " +
-      "with big simple pictures (inline SVG / emoji) and very few words, one concrete everyday analogy per option, and a " +
-      "one-line 'so we pick…' for the recommendation. No scripts, no external resources, inline CSS only.",
-    skill: "eli5",
-  },
-  "show-me": {
-    brief:
-      "Make a visual for this question: something that shows the decision and how the options differ — a comparison, a flow, " +
-      "an architecture sketch, a before/after — and mark the recommended option. Big shapes, few words. Either a ```mermaid " +
-      "block (it is drawn for real in the panel) or a self-contained HTML fragment with inline <svg> / styled divs.",
-    skill: "show-me",
-  },
-  "wait-what": {
-    brief:
-      "Re-pitch this question so it lands: give a little context (why this decision matters now, what depends on it), " +
-      "then restate the question, each option and your recommendation in ASD-STE100 Simplified Technical English: short " +
-      "sentences, one idea per sentence, common words, active voice. Use the project's ubiquitous language (CONTEXT.md if present). " +
-      "Do not add new options. Keep it under ~250 words.",
-    skill: "wait-what",
-  },
-}
-
 const FORMAT_RULE =
   'Pick the format that matches what you produced: "markdown" for prose, code, tables or a ```mermaid diagram; ' +
   '"html" for a fragment with inline CSS and no scripts or external resources, which renders in a sandboxed frame. ' +
@@ -171,7 +141,7 @@ function asideInstruction(session: Session, aside: Aside): string {
     questionSummary(round, aside.questionId),
     "",
     "Do this now:",
-    `1. If the "${spec.skill}" skill is available, invoke it about this question. Otherwise follow this brief: ${spec.brief}`,
+    `1. ${briefStep(spec)}`,
     `2. ${FORMAT_RULE}`,
     `3. Post the result with post_aside({ sessionId: "${session.id}", asideId: "${aside.id}", format, content }).`,
     "4. Call wait_for_answers again for the round.",
