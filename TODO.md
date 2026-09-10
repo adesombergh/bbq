@@ -1,0 +1,18 @@
+- Dark / light theme switcher.
+- Update Tab title with very short grilling title
+- Sound when claude gets info back.
+
+- Step 0 ask: grill-me or grill-with-docs
+- Step 0.1: maximum questions (defaults to 50)
+- Step 0.2: language english or french (default to english)
+- Step 0.3: ask what game will be played during waiting state. Options: snake, flappy, slot machine.
+- Games on waiting state
+- When frontier is empty and user confirmed shared understanding: user can choose:
+  - Just send to claude
+  - /implement
+  - /to-spec
+  - /to-tickets
+- Export ???
+  -> Artifact ?
+  -> QUestionnaire ?
+  -> PDF ?
