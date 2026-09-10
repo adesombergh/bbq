@@ -102,6 +102,16 @@ _Avoid_: helper, integration, dependency
 A free-form message from Claude shown between rounds: what the last answers settled, a lookup in progress, the shared understanding.
 _Avoid_: comment, message, status
 
+### The lull
+
+**Lull**:
+The stretch of a session with no open round, when nothing is expected of the person and they are waiting on Claude. It covers the wait before the first round as much as every wait between rounds. It is named apart from **wait** on purpose: a wait is Claude's bounded pause on a round, a lull is the same moment seen from the person's side of the seam.
+_Avoid_: waiting state, idle, downtime, dead time
+
+**Pastime**:
+The small game the browser offers during a lull, to pass the time and nothing more. It belongs to the browser and not to the grilling: it never reaches the Store, the protocol or a snapshot, and it ends the instant a round opens. Snake is today's only pastime, and the word stays for the slot rather than for the game in it.
+_Avoid_: game, minigame, easter egg, feature
+
 ### The machinery
 
 **Store**:

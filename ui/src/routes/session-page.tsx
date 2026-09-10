@@ -9,6 +9,7 @@ import { useDefaultLayout } from "react-resizable-panels"
 
 import { AsidePanel } from "@/components/aside-panel"
 import { NoteBubble } from "@/components/note-bubble"
+import { PastimeBoard } from "@/components/pastime-board"
 import { RoundView } from "@/components/round-view"
 import { SessionHeader } from "@/components/session-header"
 import { Alert, AlertTitle } from "@/components/ui/alert"
@@ -39,6 +40,20 @@ const scrollIntoView = (node: HTMLDivElement | null): void => {
   node?.scrollIntoView({ behavior: "smooth", block: "end" })
 }
 
+/**
+ * A lull: no round is open, so nothing is expected of the person. The line says
+ * what we are waiting for and the pastime is there to pass the time.
+ */
+const Lull = ({ message }: { message: string }) => (
+  <div className="space-y-3">
+    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+      <span className="inline-block size-2 animate-pulse rounded-full bg-primary" />
+      {message}
+    </div>
+    <PastimeBoard />
+  </div>
+)
+
 const SessionFooter = ({ session }: { session: Session }) => {
   if (session.status === "closed") {
     return (
@@ -48,12 +63,7 @@ const SessionFooter = ({ session }: { session: Session }) => {
     )
   }
   if (openRound(session) === undefined && session.rounds.length > 0) {
-    return (
-      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        <span className="inline-block size-2 animate-pulse rounded-full bg-primary" />
-        Claude is thinking about the next round…
-      </div>
-    )
+    return <Lull message="Claude is thinking about the next round…" />
   }
   return null
 }
@@ -123,10 +133,10 @@ export const SessionPage = () => {
         <ResizablePanel defaultSize="55" id="timeline" minSize="35">
           <ScrollArea className="h-full">
             <main className="mx-auto max-w-3xl space-y-8 px-4 py-6">
-              {items.length === 0 ? (
-                <p className="py-20 text-center text-muted-foreground">
-                  Waiting for Claude&apos;s first round…
-                </p>
+              {items.length === 0 && session.status !== "closed" ? (
+                <div className="py-12">
+                  <Lull message="Waiting for Claude’s first round…" />
+                </div>
               ) : null}
               {items.map((item, index) => (
                 <div

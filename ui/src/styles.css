@@ -171,3 +171,15 @@
     @apply text-foreground;
   }
 }
+
+/*
+ * Reduced motion applies to movement nobody asked for: the pulsing lull dot and
+ * the loading skeletons animate on their own. The pastime board is deliberately
+ * not covered — it does not move until an arrow key is pressed, and it stops
+ * when the run does (docs/adr/0016-a-game-loop-needs-no-effect.md).
+ */
+@media (prefers-reduced-motion: reduce) {
+  .animate-pulse {
+    animation: none;
+  }
+}
