@@ -13,14 +13,21 @@ which open in a contextual panel on the right.
 ## Install
 
 ```sh
-bun install          # server + ui deps
+bun install          # one workspace: server + ui deps, installs git hooks
 bun run build        # builds ui/dist once; the MCP server only serves it
 ```
 
 Register the server in the project you grill from (or globally) — `.mcp.json`:
 
 ```json
-{ "mcpServers": { "grill-ui": { "command": "bun", "args": ["run", "/path/to/grill-ui/src/mcp.ts"] } } }
+{
+  "mcpServers": {
+    "grill-ui": {
+      "command": "bun",
+      "args": ["run", "/path/to/grill-ui/src/mcp.ts"]
+    }
+  }
+}
 ```
 
 Copy or symlink `skills/grill-ui` and `skills/show-me` where your skills live
@@ -50,14 +57,14 @@ Claude ──MCP stdio──▶ src/mcp.ts ──▶ Store (src/state.ts) ◀─
 
 ### Tools
 
-| tool | blocks? | purpose |
-|---|---|---|
-| `open_session({ title })` | until a tab connects (≤ `waitForBrowserMs`, default 30s) | start a session, open the browser |
-| `ask_round({ sessionId, intro?, questions })` | no | publish one frontier round |
-| `wait_for_answers({ sessionId, roundId, timeoutMs? })` | ≤ `timeoutMs` | poll; returns `answered` / `aside_requested` / `pending` / `closed` |
-| `post_aside({ sessionId, asideId, format, content })` | no | deliver a Wait-what / Show-me / ELI5 result to the panel |
-| `post_note({ sessionId, markdown })` | no | chat bubble between rounds |
-| `close_session({ sessionId })` | no | mark the session finished |
+| tool                                                   | blocks?                                                  | purpose                                                             |
+| ------------------------------------------------------ | -------------------------------------------------------- | ------------------------------------------------------------------- |
+| `open_session({ title })`                              | until a tab connects (≤ `waitForBrowserMs`, default 30s) | start a session, open the browser                                   |
+| `ask_round({ sessionId, intro?, questions })`          | no                                                       | publish one frontier round                                          |
+| `wait_for_answers({ sessionId, roundId, timeoutMs? })` | ≤ `timeoutMs`                                            | poll; returns `answered` / `aside_requested` / `pending` / `closed` |
+| `post_aside({ sessionId, asideId, format, content })`  | no                                                       | deliver a Wait-what / Show-me / ELI5 result to the panel            |
+| `post_note({ sessionId, markdown })`                   | no                                                       | chat bubble between rounds                                          |
+| `close_session({ sessionId })`                         | no                                                       | mark the session finished                                           |
 
 ### Polling contract
 
@@ -76,7 +83,7 @@ before answers so the user is never left staring at a spinner.
 - Answering advances to the next question. When all are answered, **Send
   answers to Claude** submits the round; the round then freezes.
 - The active card shows three separated blocks: question, options
-  (+ manual answer textarea), recommendation (+ *Go with recommendation*, and the
+  (+ manual answer textarea), recommendation (+ _Go with recommendation_, and the
   three aside buttons).
 - The right panel is per question, tabbed by aside kind, closable (Esc).
   `markdown` asides render as rich text; `html` asides render in a sandboxed
@@ -96,15 +103,29 @@ before answers so the user is never left staring at a spinner.
 ## Layout
 
 ```
-src/mcp.ts      MCP entry (stdio) + tools
-src/state.ts    Store: sessions, rounds, answers, asides, notes, waitFor
-src/hub.ts      Bun.serve: static ui/dist, WS relay, token auth
-src/browser.ts  open the default browser without touching stdio
-src/types.ts    shared types (also imported by the UI)
-ui/             Vite + React + Tailwind v4, builds to ui/dist
-scripts/demo.ts fake Claude for manual testing
-skills/         grill-ui (protocol for Claude) and show-me
-test/           bun tests for state and hub
+src/mcp.ts          MCP entry (stdio) + tools
+src/state.ts        Store: sessions, rounds, answers, asides, notes, waitFor
+src/round-rules.ts  pure round rules shared with the UI (canAnswer, isComplete)
+src/protocol.ts     Zod validation of browser -> hub messages
+src/hub.ts          Bun.serve: static ui/dist, WS relay, token auth
+src/browser.ts      open the default browser without touching stdio
+src/types.ts        shared types (imported by the UI as @shared/types)
+ui/                 Vite 8 + React 19 (React Compiler) + Tailwind v4, builds to ui/dist
+  src/router.tsx    TanStack Router: / and /s/$sessionId (typed search params)
+  src/lib/          Query options, WebSocket -> cache feeder (Pacer backoff), mutations, derivations
+  src/components/   Question card, round, aside panel, TanStack Form manual answer, markdown
+  src/components/ui shadcn components on Base UI (ours to edit)
+scripts/demo.ts     fake Claude for manual testing
+skills/             grill-ui (protocol for Claude) and show-me
+test/               bun tests for state, protocol and hub
 ```
+
+## Tooling
+
+- `bun run check` is the definition of done: `oxfmt --check`, type-aware `oxlint`, `tsc` for both packages, `bun test`, `vite build`.
+- Lint and format are [ultracite](https://www.ultracite.ai) presets on top of oxlint + oxfmt (`oxlint.config.ts`, `oxfmt.config.ts`), with the same additions as the sibling `vertuo-apps` repo. Zero suppressions.
+- `lefthook` runs format + lint on staged files before each commit and `bun run check` before each push.
+- `.claude/settings.json` runs `ultracite fix` after every file Claude writes. `CLAUDE.md` holds the rules an agent must know; `AGENTS.md` is the generated ultracite standard.
+- UI state model: TanStack Query owns the session snapshot (fed by the WebSocket), TanStack Router owns the view state in the URL, there is no `useEffect` in `ui/src` (the import is banned by lint) and the React Compiler handles memoisation.
 
 Env: `GRILL_UI_WAIT_MS` default poll length, `GRILL_UI_NO_OPEN=1` to not launch a browser.

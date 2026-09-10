@@ -1,33 +1,173 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "@fontsource-variable/geist";
+@import "@fontsource-variable/geist-mono";
 
-@theme {
-  --color-bg: #0f1115;
-  --color-panel: #171a21;
-  --color-card: #1c2029;
-  --color-line: #2a2f3a;
-  --color-ink: #e6e8ee;
-  --color-muted: #8b93a7;
-  --color-accent: #f59e0b;
-  --color-accent-soft: #f59e0b22;
-  --color-ok: #34d399;
-  --color-info: #60a5fa;
+/* Dark is the default; the light palette applies only when the OS asks for it. */
+@custom-variant dark {
+  @media not (prefers-color-scheme: light) {
+    @slot;
+  }
 }
 
-html { color-scheme: dark; }
-html, body, #root { height: 100%; }
-body { background: var(--color-bg); color: var(--color-ink); font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+@theme inline {
+  --font-sans: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Geist Mono Variable", ui-monospace, SFMono-Regular, monospace;
+  --font-heading: var(--font-sans);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-ok: var(--ok);
+  --color-info: var(--info);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
 
-/* Minimal markdown styling (no typography plugin). */
-.md > * + * { margin-top: 0.6em; }
-.md p { line-height: 1.55; }
-.md h1, .md h2, .md h3 { font-weight: 600; line-height: 1.3; }
-.md h1 { font-size: 1.25rem; } .md h2 { font-size: 1.1rem; } .md h3 { font-size: 1rem; }
-.md ul { list-style: disc; padding-left: 1.4em; } .md ol { list-style: decimal; padding-left: 1.4em; }
-.md li + li { margin-top: 0.25em; }
-.md code { background: #ffffff12; padding: 0.1em 0.35em; border-radius: 0.3em; font-size: 0.9em; }
-.md pre { background: #0b0d12; border: 1px solid var(--color-line); padding: 0.75em 1em; border-radius: 0.5em; overflow-x: auto; }
-.md pre code { background: transparent; padding: 0; }
-.md a { color: var(--color-info); text-decoration: underline; }
-.md blockquote { border-left: 3px solid var(--color-line); padding-left: 0.8em; color: var(--color-muted); }
-.md table { border-collapse: collapse; } .md th, .md td { border: 1px solid var(--color-line); padding: 0.3em 0.6em; }
-.md strong { color: #fff; }
+/* The original grill-ui hues, mapped onto the shadcn token vocabulary. */
+:root {
+  color-scheme: dark;
+  --radius: 0.75rem;
+  --background: #0f1115;
+  --foreground: #e6e8ee;
+  --card: #1c2029;
+  --card-foreground: #e6e8ee;
+  --popover: #1c2029;
+  --popover-foreground: #e6e8ee;
+  --primary: #f59e0b;
+  --primary-foreground: #0f1115;
+  --secondary: #171a21;
+  --secondary-foreground: #e6e8ee;
+  --muted: #171a21;
+  --muted-foreground: #8b93a7;
+  --accent: #2a2f3a;
+  --accent-foreground: #e6e8ee;
+  --destructive: #f87171;
+  --border: #2a2f3a;
+  --input: #2a2f3a;
+  --ring: #f59e0b;
+  --ok: #34d399;
+  --info: #60a5fa;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    color-scheme: light;
+    --background: #f7f7f9;
+    --foreground: #16181d;
+    --card: #ffffff;
+    --card-foreground: #16181d;
+    --popover: #ffffff;
+    --popover-foreground: #16181d;
+    --primary: #d97706;
+    --primary-foreground: #ffffff;
+    --secondary: #eceef2;
+    --secondary-foreground: #16181d;
+    --muted: #eceef2;
+    --muted-foreground: #5f6776;
+    --accent: #e2e5eb;
+    --accent-foreground: #16181d;
+    --destructive: #dc2626;
+    --border: #d9dde4;
+    --input: #d9dde4;
+    --ring: #d97706;
+    --ok: #059669;
+    --info: #2563eb;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+  body {
+    @apply bg-background font-sans text-foreground;
+  }
+}
+
+/* Markdown produced by Claude: questions, recommendations, notes, asides. */
+@layer components {
+  .md > * + * {
+    margin-top: 0.6em;
+  }
+  .md p {
+    line-height: 1.55;
+  }
+  .md h1,
+  .md h2,
+  .md h3 {
+    font-weight: 600;
+    line-height: 1.3;
+  }
+  .md h1 {
+    font-size: 1.25rem;
+  }
+  .md h2 {
+    font-size: 1.1rem;
+  }
+  .md h3 {
+    font-size: 1rem;
+  }
+  .md ul {
+    list-style: disc;
+    padding-left: 1.4em;
+  }
+  .md ol {
+    list-style: decimal;
+    padding-left: 1.4em;
+  }
+  .md li + li {
+    margin-top: 0.25em;
+  }
+  .md code {
+    @apply rounded-sm bg-accent px-1.5 py-0.5 font-mono text-[0.9em];
+  }
+  .md pre {
+    @apply overflow-x-auto rounded-md border bg-background px-4 py-3;
+  }
+  .md pre code {
+    background: transparent;
+    padding: 0;
+  }
+  .md a {
+    @apply text-info underline underline-offset-4;
+  }
+  .md blockquote {
+    @apply border-l-2 pl-3 text-muted-foreground;
+  }
+  .md table {
+    border-collapse: collapse;
+  }
+  .md th,
+  .md td {
+    @apply border px-2.5 py-1;
+  }
+  .md strong {
+    @apply text-foreground;
+  }
+}
