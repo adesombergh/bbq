@@ -10,6 +10,18 @@ A grilling is a relentless, multi-round interview in which Claude stress-tests a
 One grilling of one plan, from the first round to the shared understanding. A session is either open or closed.
 _Avoid_: conversation, chat, interview
 
+**Mode**:
+Whether a session also tends the project's documents. Grill-me is the interview alone; grill-with-docs reads the glossary and the decision records to ground its questions, and writes new terms and decisions as they settle.
+_Avoid_: profile, preset, docs mode
+
+**Question budget**:
+The maximum number of questions a session may put to the person. It counts questions inside rounds only: asides are free, the final confirmation round is free, and a decision genuinely reopened counts again. Spent in full, it ends the session by naming the remaining decisions and the recommendation assumed for each.
+_Avoid_: limit, quota, max questions
+
+**Session language**:
+The language of everything Claude writes to the person: questions, options, recommendations, notes and asides. It reaches no further — the browser's own words, the project's documents and its code stay as they are.
+_Avoid_: locale, translation, i18n
+
 **Design tree**:
 The set of decisions a plan contains, where each decision branches into the decisions that depend on it.
 _Avoid_: plan, outline
@@ -59,7 +71,7 @@ _Avoid_: submit, confirm, finish
 ### Around the questions
 
 **Aside**:
-A request, made on one question, for Claude to explain that question differently. An aside is requested, then claimed by Claude, then resolved or failed. Three kinds exist: Wait what, Show me, ELI5.
+A request, made on one question, for Claude to explain that question differently. An aside is requested, then claimed by Claude, then resolved or failed. Three kinds exist: Wait what, Show me, ELI5. The kind is what the person asked for; the format the answer comes back in is Claude's choice for that one aside, not a property of the kind.
 _Avoid_: help, hint, clarification
 
 **Wait what**:
@@ -67,8 +79,12 @@ The aside that re-pitches a question in plain words with a little context.
 _Avoid_: rephrase, simplify
 
 **Show me**:
-The aside that answers with a visual: a comparison, a flow, a sketch.
-_Avoid_: diagram, illustration
+The aside that answers with a visual: a comparison, a flow, a sketch. It may contain a diagram, but the two are not the same word.
+_Avoid_: illustration, drawing
+
+**Diagram**:
+A picture the browser draws from source text inside an aside, rather than one Claude drew itself. Only asides may contain one.
+_Avoid_: chart, graph, mermaid
 
 **ELI5**:
 The aside that explains a question as if the reader knew nothing about the topic, with pictures and everyday analogies.

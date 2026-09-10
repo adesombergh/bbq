@@ -7,8 +7,8 @@ Terminal Q&A collapses under a long grilling: each question packs a lot of
 information into few words and the rounds scroll away. grill-ui replaces that
 with a local web app. Claude pushes rounds of questions into it; you answer
 with buttons or free text, and for any question you can ask for a re-pitch
-(**Wait what**), a visual (**Show me**) or a plain-language explainer (**ELI5**),
-which open in a contextual panel on the right.
+(**Wait what**), a visual (**Show me**, which may come back as a diagram) or a
+plain-language explainer (**ELI5**), which open in a contextual panel on the right.
 
 ## Install
 
@@ -30,12 +30,31 @@ Register the server in the project you grill from (or globally) — `.mcp.json`:
 }
 ```
 
-Copy or symlink `skills/grill-ui` and `skills/show-me` where your skills live
-(`.agents/skills`, `.claude/skills`…). `wait-what` and `eli5` are existing skills;
-the tool results carry an inline brief so Claude can still answer asides when a
-skill is missing.
+Copy or symlink `skills/grill-ui` where your skills live (`.agents/skills`,
+`.claude/skills`…). The three aside kinds map to skills Claude may already have
+— `wait-what`, `eli5`, and `show-me`, which you can install with:
+
+```sh
+npx skills add humanlayer/skills --skill show-me
+```
+
+All three are optional: the tool results carry an inline brief, so Claude still
+answers an aside when the skill is missing.
 
 Then: “grill me on X with the UI”.
+
+### Step 0
+
+Before the browser opens, Claude settles three things — asking only for what you
+did not already say when you invoked it:
+
+- **Mode** — `grill-me`, or `grill-with-docs` to also read this project's
+  `CONTEXT.md` and `docs/adr/` and write new terms and decisions as they settle.
+- **Question budget** — a maximum number of questions, no maximum by default. It
+  counts questions inside rounds; asides and the final confirmation are free.
+  Spent in full, Claude names what it did not get to and what it is assuming.
+- **Language** — English or French. It covers what Claude writes — questions,
+  notes, asides — and not the browser's own words or this repo's documents.
 
 ## Try it without Claude
 
@@ -116,7 +135,7 @@ ui/                 Vite 8 + React 19 (React Compiler) + Tailwind v4, builds to 
   src/components/   Question card, round, aside panel, TanStack Form manual answer, markdown
   src/components/ui shadcn components on Base UI (ours to edit)
 scripts/demo.ts     fake Claude for manual testing
-skills/             grill-ui (protocol for Claude) and show-me
+skills/             grill-ui (the protocol Claude follows in the browser)
 test/               bun tests for state, protocol and hub
 ```
 
