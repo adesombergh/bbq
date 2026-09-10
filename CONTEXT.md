@@ -56,6 +56,10 @@ _Avoid_: default, suggestion
 The person's decision on one question: a chosen option, the recommendation taken as is, or a manual answer.
 _Avoid_: response, reply, selection
 
+**Pick**:
+The option, or the recommendation, the person has pointed at and not yet confirmed. It reaches no further than the tab: the Store never sees it, the next question stays locked, the answer footer stays empty and the round stays incomplete until a second, explicit press turns it into an **answer**. One pick exists at a time, on the active question; leaving that question forgets it.
+_Avoid_: selection, choice, draft answer, tentative answer
+
 **Manual answer**:
 An answer written in the person's own words instead of picking an option or the recommendation.
 _Avoid_: free text, custom answer, comment

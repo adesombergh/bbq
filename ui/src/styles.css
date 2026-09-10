@@ -173,6 +173,46 @@
 }
 
 /*
+ * The two motions of a round (docs/adr/0017-answering-takes-two-presses.md):
+ * the question body collapsing and expanding at ~250ms, so the move from one
+ * question to the next reads as an event rather than a repaint; and the
+ * confirm on a picked option fading in, inert until it has arrived, so the
+ * second click of a double-click cannot reach it. `step-end` holds
+ * `pointer-events: none` for the whole fade and then drops to the underlying
+ * value, which needs no state and no effect.
+ */
+@layer components {
+  .question-panel {
+    height: var(--collapsible-panel-height);
+    overflow: hidden;
+    transition:
+      height 250ms ease-out,
+      opacity 250ms ease-out;
+  }
+  .question-panel[data-starting-style],
+  .question-panel[data-ending-style] {
+    height: 0;
+    opacity: 0;
+  }
+  .pick-confirm {
+    animation:
+      pick-confirm-fade 250ms ease-out,
+      pick-confirm-arm 250ms step-end;
+  }
+  @keyframes pick-confirm-fade {
+    from {
+      opacity: 0;
+      transform: translateY(-2px);
+    }
+  }
+  @keyframes pick-confirm-arm {
+    from {
+      pointer-events: none;
+    }
+  }
+}
+
+/*
  * Reduced motion applies to movement nobody asked for: the pulsing lull dot and
  * the loading skeletons animate on their own. The pastime board is deliberately
  * not covered — it does not move until an arrow key is pressed, and it stops
@@ -180,6 +220,13 @@
  */
 @media (prefers-reduced-motion: reduce) {
   .animate-pulse {
+    animation: none;
+  }
+  .question-panel {
+    transition: none;
+  }
+  /* No fade means nothing to be inert during: the confirm is armed at once. */
+  .pick-confirm {
     animation: none;
   }
 }

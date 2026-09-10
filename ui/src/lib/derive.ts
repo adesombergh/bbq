@@ -63,6 +63,37 @@ export function activeQuestionId(
   return firstUnanswered(round)
 }
 
+/** The pick that means "take Claude's recommendation" rather than an option. */
+export const RECOMMENDED_PICK = "recommended"
+
+/**
+ * The pick on the active question: the option (or the recommendation) the
+ * person has pointed at and not yet confirmed. It is scoped to `?q=`, so
+ * moving the active question forgets it, and it is checked against the
+ * question so a stale id from the URL never lights a row up.
+ * See docs/adr/0017-answering-takes-two-presses.md.
+ */
+export function activePick(
+  session: Session,
+  search: SessionSearch
+): string | undefined {
+  if (search.pick === undefined) {
+    return undefined
+  }
+  const round = openRound(session)
+  const questionId = activeQuestionId(session, search)
+  const question = round?.questions.find((q) => q.id === questionId)
+  if (question === undefined) {
+    return undefined
+  }
+  if (search.pick === RECOMMENDED_PICK) {
+    return RECOMMENDED_PICK
+  }
+  return question.options.some((option) => option.id === search.pick)
+    ? search.pick
+    : undefined
+}
+
 export function newestAside(asides: Aside[]): Aside | undefined {
   let newest: Aside | undefined
   for (const aside of asides) {

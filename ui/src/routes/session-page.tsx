@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/resizable"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import {
+  activePick,
   activeQuestionId,
   asidesFor,
   findQuestion,
@@ -89,6 +90,7 @@ export const SessionPage = () => {
 
   const items = timeline(session)
   const activeQ = activeQuestionId(session, search)
+  const pick = activePick(session, search)
   const panelQ = panelQuestionId(session, search)
   const panelTarget =
     panelQ === undefined ? undefined : findQuestion(session, panelQ)
@@ -150,7 +152,9 @@ export const SessionPage = () => {
                       activeQuestionId={activeQ}
                       asides={session.asides}
                       onActivate={(questionId) => {
-                        setSearch({ q: questionId })
+                        // A pick belongs to the question you are looking at:
+                        // leaving forgets it (ADR 0017).
+                        setSearch({ pick: undefined, q: questionId })
                       }}
                       onAnswer={(questionId, answer) => {
                         send(messages.answer(item.round.id, questionId, answer))
@@ -161,7 +165,7 @@ export const SessionPage = () => {
                             q.id !== questionId &&
                             item.round.answers[q.id] === undefined
                         )
-                        setSearch({ q: next?.id })
+                        setSearch({ pick: undefined, q: next?.id })
                       }}
                       onAside={(questionId, kind) => {
                         requestAside(item.round.id, questionId, kind)
@@ -169,10 +173,14 @@ export const SessionPage = () => {
                       onOpenPanel={(questionId) => {
                         setSearch({ panel: questionId })
                       }}
+                      onPick={(questionId, picked) => {
+                        setSearch({ pick: picked, q: questionId })
+                      }}
                       onSubmit={() => {
                         send(messages.submitRound(item.round.id))
                       }}
                       panelQuestionId={panelQ}
+                      pick={pick}
                       round={item.round}
                     />
                   )}

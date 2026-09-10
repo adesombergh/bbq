@@ -20,4 +20,3 @@
   -> PDF ?
 - Edit session title?
 - rename Barbecue (/bbq)
-- Option (add click to confirm)

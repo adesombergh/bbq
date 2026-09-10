@@ -11,9 +11,11 @@ import { Button } from "@/components/ui/button"
 interface RoundViewProps {
   round: Round
   activeQuestionId: string | undefined
+  pick: string | undefined
   panelQuestionId: string | undefined
   asides: Aside[]
   onActivate: (questionId: string) => void
+  onPick: (questionId: string, pick: string) => void
   onAnswer: (questionId: string, answer: Omit<Answer, "answeredAt">) => void
   onSubmit: () => void
   onAside: (questionId: string, kind: AsideKind) => void
@@ -23,9 +25,11 @@ interface RoundViewProps {
 export const RoundView = ({
   round,
   activeQuestionId,
+  pick,
   panelQuestionId,
   asides,
   onActivate,
+  onPick,
   onAnswer,
   onSubmit,
   onAside,
@@ -79,6 +83,10 @@ export const RoundView = ({
             onOpenPanel={() => {
               onOpenPanel(question.id)
             }}
+            onPick={(picked) => {
+              onPick(question.id, picked)
+            }}
+            pick={activeQuestionId === question.id ? pick : undefined}
             question={question}
             roundOpen={open}
             unlocked={canAnswer(round, question.id)}
