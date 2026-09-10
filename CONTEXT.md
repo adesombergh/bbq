@@ -77,3 +77,49 @@ _Avoid_: beginner mode, simple explanation
 **Note**:
 A free-form message from Claude shown between rounds: what the last answers settled, a lookup in progress, the shared understanding.
 _Avoid_: comment, message, status
+
+### The machinery
+
+**Store**:
+The single record of every session on this machine. It is the one thing Claude and the browser both touch, and neither touches the other.
+_Avoid_: database, backend, state manager, server state
+
+**Hub**:
+The part of the server the browser talks to: it hands out the page and relays snapshots to every tab of a session.
+_Avoid_: web server, API, socket server
+
+**Tool**:
+One of the six named actions Claude can take on a session: open it, ask a round, wait, post an aside, post a note, close it.
+_Avoid_: endpoint, command, call
+
+**Snapshot**:
+The whole of one session as the browser sees it at one moment. A tab only ever receives complete snapshots and replaces what it had.
+_Avoid_: state, update, delta, patch, event
+
+**Tab**:
+One connected browser page showing a session. A session can have several tabs at once, all showing the same snapshot, or none.
+_Avoid_: client, connection, socket, viewer
+
+**Wait**:
+Claude's bounded pause on an open round. A wait ends with an outcome or, at its timeout, with pending, and Claude then waits again.
+_Avoid_: block, long poll, subscription, listen
+
+**Outcome**:
+What a wait reports back to Claude: answered (the round was sent), aside requested, pending (nothing happened yet) or closed.
+_Avoid_: result, status, response, event
+
+**Requested aside**:
+An aside the person has asked for and Claude has not yet been handed. Asking again for the same kind on the same question returns this one.
+_Avoid_: pending aside, queued aside, open aside
+
+**Claimed aside**:
+An aside that has been handed to Claude and is being worked on. The person sees it as in progress until it is resolved or failed.
+_Avoid_: in-flight aside, active aside, processing
+
+**Rejection**:
+The hub's refusal of a browser action that breaks a round rule, answered with the reason and a fresh snapshot so the tab snaps back.
+_Avoid_: error, validation failure, conflict
+
+**Token**:
+The secret minted when the server starts that every tab must present to see a session. It travels once in the session link, then in a cookie.
+_Avoid_: password, key, auth, credential

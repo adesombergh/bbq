@@ -220,7 +220,7 @@ export function startHub(opts: HubOptions): Hub {
         const { sessionId } = ws.data
         sockets.get(sessionId)?.delete(ws)
         if (store.has(sessionId)) {
-          store.setClients(sessionId, -1)
+          store.setTabs(sessionId, -1)
         }
         log(`browser disconnected from ${sessionId}`)
       },
@@ -250,8 +250,8 @@ export function startHub(opts: HubOptions): Hub {
         const set = sockets.get(sessionId) ?? new Set<ServerWebSocket<WsData>>()
         sockets.set(sessionId, set)
         set.add(ws)
-        // setClients emits -> broadcast gives the newcomer its first snapshot.
-        store.setClients(sessionId, 1)
+        // setTabs emits -> broadcast gives the newcomer its first snapshot.
+        store.setTabs(sessionId, 1)
         log(`browser connected to ${sessionId} (${set.size} tab(s))`)
       },
     },

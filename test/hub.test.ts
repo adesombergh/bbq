@@ -12,12 +12,12 @@ import { Store } from "../src/state.ts"
 const serverMessageSchema = z.discriminatedUnion("type", [
   z.object({
     session: z.object({
-      clients: z.number(),
       rounds: z.array(
         z.object({
           answers: z.record(z.string(), z.object({ text: z.string() })),
         })
       ),
+      tabs: z.number(),
     }),
     type: z.literal("state"),
   }),
@@ -99,7 +99,7 @@ describe("hub", () => {
     const first = await nextMessage(ws)
     expect(first.type).toBe("state")
     if (first.type === "state") {
-      expect(first.session.clients).toBe(1)
+      expect(first.session.tabs).toBe(1)
     }
 
     const afterAnswer = nextMessage(ws)
@@ -123,7 +123,7 @@ describe("hub", () => {
 
     ws.close()
     await Bun.sleep(CLOSE_SETTLE_MS)
-    expect(store.get(sess.id).clients).toBe(0)
+    expect(store.get(sess.id).tabs).toBe(0)
   })
 
   test("ws refuses unknown session", async () => {

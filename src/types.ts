@@ -90,7 +90,7 @@ export interface Session {
   asides: Aside[]
   notes: Note[]
   /** Number of browser tabs currently connected. */
-  clients: number
+  tabs: number
 }
 
 /* ---------- WebSocket protocol ---------- */

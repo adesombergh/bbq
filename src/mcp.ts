@@ -161,7 +161,7 @@ function asideInstruction(session: Session, aside: Aside): string {
   }
   const spec = ASIDE_BRIEFS[aside.kind]
   return [
-    "status: aside_requested",
+    "outcome: aside_requested",
     `The user pressed "${aside.kind}" on the question below and is waiting in the browser.`,
     "",
     questionSummary(round, aside.questionId),
@@ -195,21 +195,21 @@ function outcomeFor(session: Session, roundId: string): Outcome | undefined {
 }
 
 function pendingReport(session: Session, round: Round): string {
-  const tabs =
-    session.clients === 0
+  const hint =
+    session.tabs === 0
       ? `No browser is connected. The user may have closed the tab; the URL is ${hub.urlFor(session.id)}.`
       : "The user is still working. Call wait_for_answers again."
   return [
-    "status: pending",
+    "outcome: pending",
     `progress: ${answeredCount(round)}/${round.questions.length} answered (not submitted yet)`,
-    `browserTabs: ${session.clients}`,
-    tabs,
+    `tabs: ${session.tabs}`,
+    hint,
   ].join("\n")
 }
 
 function answeredReport(round: Round): string {
   return [
-    "status: answered",
+    "outcome: answered",
     `round: ${round.index}`,
     "",
     formatAnswers(round),
@@ -252,7 +252,7 @@ server.registerTool(
     log(`session ${session.id} at ${url}`)
     const connected = await store.waitFor(
       session.id,
-      (s) => (s.clients > 0 ? true : undefined),
+      (s) => (s.tabs > 0 ? true : undefined),
       clampWait(waitForBrowserMs, DEFAULT_BROWSER_WAIT_MS)
     )
     const lines = [
@@ -271,7 +271,7 @@ server.registerTool(
       "",
       "Next: run the grilling skill as usual, but instead of printing a round, call ask_round with the frontier " +
         "(numbered questions with title, body, options if any, and your recommendation), then loop on wait_for_answers " +
-        "until it returns status: answered. Keep terminal output minimal; the browser is the conversation surface."
+        "until it returns outcome: answered. Keep terminal output minimal; the browser is the conversation surface."
     )
     return text(lines.join("\n"))
   })
@@ -377,7 +377,7 @@ server.registerTool(
     }
     switch (outcome.kind) {
       case "closed": {
-        return text("status: closed\nThe session was closed.")
+        return text("outcome: closed\nThe session was closed.")
       }
       case "aside": {
         store.claimAside(sessionId, outcome.aside.id)

@@ -127,12 +127,12 @@ export class Store {
   createSession(title: string): Session {
     const session: Session = {
       asides: [],
-      clients: 0,
       createdAt: Date.now(),
       id: newId("s"),
       notes: [],
       rounds: [],
       status: "open",
+      tabs: 0,
       title,
     }
     this.sessions.set(session.id, session)
@@ -165,9 +165,9 @@ export class Store {
     return session
   }
 
-  setClients(sessionId: string, delta: number): Session {
+  setTabs(sessionId: string, delta: number): Session {
     const session = this.get(sessionId)
-    session.clients = Math.max(0, session.clients + delta)
+    session.tabs = Math.max(0, session.tabs + delta)
     this.emit(session)
     return session
   }
