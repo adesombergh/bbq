@@ -4,12 +4,9 @@
 @import "@fontsource-variable/geist";
 @import "@fontsource-variable/geist-mono";
 
-/* Dark is the default; the light palette applies only when the OS asks for it. */
-@custom-variant dark {
-  @media not (prefers-color-scheme: light) {
-    @slot;
-  }
-}
+/* `system` is resolved in JS (index.html + lib/theme.ts): <html> always carries
+   a concrete data-theme, so the stylesheet never asks the OS itself. */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
 @theme inline {
   --font-sans: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
@@ -44,10 +41,15 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-/* The original grill-ui hues, mapped onto the shadcn token vocabulary. */
+/* The original grill-ui hues, mapped onto the shadcn token vocabulary. Dark is
+   also on bare :root so a page whose inline script never ran still reads. */
 :root {
-  color-scheme: dark;
   --radius: 0.75rem;
+}
+
+:root,
+[data-theme="dark"] {
+  color-scheme: dark;
   --background: #0f1115;
   --foreground: #e6e8ee;
   --card: #1c2029;
@@ -70,30 +72,28 @@
   --info: #60a5fa;
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color-scheme: light;
-    --background: #f7f7f9;
-    --foreground: #16181d;
-    --card: #ffffff;
-    --card-foreground: #16181d;
-    --popover: #ffffff;
-    --popover-foreground: #16181d;
-    --primary: #d97706;
-    --primary-foreground: #ffffff;
-    --secondary: #eceef2;
-    --secondary-foreground: #16181d;
-    --muted: #eceef2;
-    --muted-foreground: #5f6776;
-    --accent: #e2e5eb;
-    --accent-foreground: #16181d;
-    --destructive: #dc2626;
-    --border: #d9dde4;
-    --input: #d9dde4;
-    --ring: #d97706;
-    --ok: #059669;
-    --info: #2563eb;
-  }
+[data-theme="light"] {
+  color-scheme: light;
+  --background: #f7f7f9;
+  --foreground: #16181d;
+  --card: #ffffff;
+  --card-foreground: #16181d;
+  --popover: #ffffff;
+  --popover-foreground: #16181d;
+  --primary: #d97706;
+  --primary-foreground: #ffffff;
+  --secondary: #eceef2;
+  --secondary-foreground: #16181d;
+  --muted: #eceef2;
+  --muted-foreground: #5f6776;
+  --accent: #e2e5eb;
+  --accent-foreground: #16181d;
+  --destructive: #dc2626;
+  --border: #d9dde4;
+  --input: #d9dde4;
+  --ring: #d97706;
+  --ok: #059669;
+  --info: #2563eb;
 }
 
 @layer base {

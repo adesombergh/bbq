@@ -100,6 +100,10 @@ _Avoid_: state, update, delta, patch, event
 One connected browser page showing a session. A session can have several tabs at once, all showing the same snapshot, or none.
 _Avoid_: client, connection, socket, viewer
 
+**Short title**:
+The terse name of a session, two to four words, written for the browser tab where a full title does not fit. It defaults to the title and is capped in length.
+_Avoid_: tab title, label, slug
+
 **Wait**:
 Claude's bounded pause on an open round. A wait ends with an outcome or, at its timeout, with pending, and Claude then waits again.
 _Avoid_: block, long poll, subscription, listen

@@ -1,5 +1,3 @@
-- Dark / light theme switcher.
-- Update Tab title with very short grilling title
 - Sound when claude gets info back.
 
 - Step 0 ask: grill-me or grill-with-docs
@@ -16,3 +14,4 @@
   -> Artifact ?
   -> QUestionnaire ?
   -> PDF ?
+- Edit session title?

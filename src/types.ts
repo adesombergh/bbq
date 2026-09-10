@@ -83,6 +83,8 @@ export type SessionStatus = "open" | "closed"
 export interface Session {
   id: string
   title: string
+  /** Terse label for the browser tab, capped in length. Defaults to `title`. */
+  shortTitle: string
   status: SessionStatus
   createdAt: number
   closedAt?: number

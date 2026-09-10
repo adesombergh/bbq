@@ -230,6 +230,13 @@ server.registerTool(
       "Start a grill-ui session and open the browser UI. Blocks until a browser tab connects (at most waitForBrowserMs) " +
       "and returns the sessionId and URL. Call once per grilling session, then use ask_round / wait_for_answers.",
     inputSchema: {
+      shortTitle: z
+        .string()
+        .min(1)
+        .optional()
+        .describe(
+          "Two to four words for the browser tab, e.g. 'Payment retries'. Defaults to `title`; truncated if long."
+        ),
       title: z
         .string()
         .min(1)
@@ -245,8 +252,8 @@ server.registerTool(
     },
     title: "Open a grilling session in the browser",
   },
-  guard(async ({ title, waitForBrowserMs }) => {
-    const session = store.createSession(title)
+  guard(async ({ title, shortTitle, waitForBrowserMs }) => {
+    const session = store.createSession(title, shortTitle)
     const url = hub.urlFor(session.id)
     const opened = openBrowser(url)
     log(`session ${session.id} at ${url}`)

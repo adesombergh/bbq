@@ -3,6 +3,7 @@ import type { Session } from "@shared/types"
 
 import { Flame } from "lucide-react"
 
+import { ThemeToggle } from "@/components/theme-toggle"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 
@@ -42,6 +43,7 @@ export const SessionHeader = ({ session, status }: SessionHeaderProps) => {
         />
         {STATUS_LABEL[status]}
       </Badge>
+      <ThemeToggle />
     </header>
   )
 }

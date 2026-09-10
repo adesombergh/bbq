@@ -134,4 +134,23 @@ describe("Store", () => {
     })
     expect(r.answers.r1q1).toBeUndefined()
   })
+
+  test("short title falls back to the title and is capped", () => {
+    const s = new Store()
+    expect(s.createSession("Payment retries").shortTitle).toBe(
+      "Payment retries"
+    )
+    expect(s.createSession("Payment retries", "Retries").shortTitle).toBe(
+      "Retries"
+    )
+
+    const long = "Retry policy for the payment webhook worker, end to end"
+    expect(s.createSession(long).shortTitle).toBe(
+      "Retry policy for the payment webhook wo…"
+    )
+    expect(s.createSession("t", long).shortTitle.length).toBeLessThanOrEqual(40)
+    expect(s.createSession("t", "   ").shortTitle).toBe("t")
+    // The full title is never touched: the header still shows it whole.
+    expect(s.createSession(long).title).toBe(long)
+  })
 })

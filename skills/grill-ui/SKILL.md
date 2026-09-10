@@ -7,7 +7,7 @@ Run the `grilling` skill exactly as written (design tree, frontier, rounds, one 
 
 ## Protocol
 
-1. `open_session({ title })` once. It opens the browser and returns `sessionId`. Tell the user in one line that the session is open in the browser.
+1. `open_session({ title, shortTitle })` once. It opens the browser and returns `sessionId`. `title` is the descriptive one shown in the header; `shortTitle` is two to four words for the browser tab. Tell the user in one line that the session is open in the browser.
 2. For each round, call `ask_round({ sessionId, intro?, questions })` instead of printing `❓ Q1 …`. One question object per frontier question:
    - `title`: the bold title. `body`: the full question, markdown, as many paragraphs as needed.
    - `options`: list `{ label, description? }` for closed questions; omit for open questions.

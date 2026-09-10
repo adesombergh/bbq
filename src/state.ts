@@ -22,6 +22,24 @@ type Listener = (session: Session) => void
 
 const ID_LENGTH = 8
 const LETTER_A = 97
+/** A browser tab shows about this much of a title before cutting it off. */
+const SHORT_TITLE_MAX = 40
+
+const graphemes = new Intl.Segmenter(undefined, { granularity: "grapheme" })
+
+/** Keep a tab label short whatever the caller sent. Cuts between graphemes, so
+ *  an emoji or an accented character is never sliced in half. */
+function shorten(value: string): string {
+  const trimmed = value.trim()
+  const chars = [...graphemes.segment(trimmed)].map((part) => part.segment)
+  if (chars.length <= SHORT_TITLE_MAX) {
+    return trimmed
+  }
+  return `${chars
+    .slice(0, SHORT_TITLE_MAX - 1)
+    .join("")
+    .trimEnd()}…`
+}
 
 export function newId(prefix: string): string {
   return `${prefix}_${crypto.randomUUID().slice(0, ID_LENGTH)}`
@@ -124,13 +142,16 @@ export class Store {
 
   /* ---------- sessions ---------- */
 
-  createSession(title: string): Session {
+  createSession(title: string, shortTitle?: string): Session {
+    // A blank short title is no short title: the full one is the fallback.
+    const short = shortTitle?.trim()
     const session: Session = {
       asides: [],
       createdAt: Date.now(),
       id: newId("s"),
       notes: [],
       rounds: [],
+      shortTitle: shorten(short === undefined || short === "" ? title : short),
       status: "open",
       tabs: 0,
       title,

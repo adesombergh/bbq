@@ -13,6 +13,7 @@ import { z } from "zod"
 import { sessionSearchSchema } from "@/lib/search"
 import { sessionQueryOptions } from "@/lib/session-query"
 import { connectSession } from "@/lib/session-socket"
+import { watchTabStatus } from "@/lib/tab-status"
 import { NoSession } from "@/routes/no-session"
 import { SessionPage } from "@/routes/session-page"
 import { Connecting, SessionError } from "@/routes/status-screens"
@@ -49,6 +50,7 @@ export const sessionRoute = createRoute({
     // Opening the socket here (not in an effect) means the first state frame
     // can arrive while the HTTP snapshot is still loading.
     connectSession(context.queryClient, params.sessionId)
+    watchTabStatus(context.queryClient, params.sessionId)
     await context.queryClient.query(sessionQueryOptions(params.sessionId))
   },
   path: "/s/$sessionId",
