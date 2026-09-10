@@ -4,103 +4,113 @@
  * free of runtime imports.
  */
 
-export type AsideKind = "wait-what" | "show-me" | "eli5";
+export const ASIDE_KINDS = ["wait-what", "show-me", "eli5"] as const
 
-export const ASIDE_KINDS: readonly AsideKind[] = ["wait-what", "show-me", "eli5"];
+export type AsideKind = (typeof ASIDE_KINDS)[number]
 
 export interface Option {
-  id: string;
-  label: string;
+  id: string
+  label: string
   /** Optional longer explanation of the option (markdown). */
-  description?: string;
+  description?: string
 }
 
 export interface Question {
-  id: string;
+  id: string
   /** Short title, e.g. "Transport". */
-  title: string;
+  title: string
   /** Full question body, markdown. */
-  body: string;
+  body: string
   /** Closed questions carry options; open questions have none. */
-  options: Option[];
+  options: Option[]
   /** Claude's recommended answer, markdown. Always present (grilling format). */
-  recommendation: string;
+  recommendation: string
   /** If the recommendation maps to one of the options, its id. */
-  recommendedOptionId?: string;
+  recommendedOptionId?: string
 }
 
-export type AnswerKind = "option" | "text" | "recommended";
+export type AnswerKind = "option" | "text" | "recommended"
 
 export interface Answer {
-  kind: AnswerKind;
+  kind: AnswerKind
   /** Set when kind === "option" (or "recommended" resolving to an option). */
-  optionId?: string;
+  optionId?: string
   /** Human-readable answer text. Always set. */
-  text: string;
-  answeredAt: number;
+  text: string
+  answeredAt: number
 }
 
-export type RoundStatus = "open" | "submitted";
+export type RoundStatus = "open" | "submitted"
 
 export interface Round {
-  id: string;
+  id: string
   /** 1-based round number within the session. */
-  index: number;
+  index: number
   /** Optional intro shown above the questions (markdown). */
-  intro?: string;
-  questions: Question[];
-  answers: Record<string, Answer>;
-  status: RoundStatus;
-  createdAt: number;
-  submittedAt?: number;
+  intro?: string
+  questions: Question[]
+  answers: Record<string, Answer>
+  status: RoundStatus
+  createdAt: number
+  submittedAt?: number
 }
 
-export type AsideStatus = "requested" | "claimed" | "resolved" | "failed";
+export type AsideStatus = "requested" | "claimed" | "resolved" | "failed"
 
 export interface Aside {
-  id: string;
-  roundId: string;
-  questionId: string;
-  kind: AsideKind;
-  status: AsideStatus;
+  id: string
+  roundId: string
+  questionId: string
+  kind: AsideKind
+  status: AsideStatus
   /** Rendered content once resolved. */
-  format?: "markdown" | "html";
-  content?: string;
-  error?: string;
-  requestedAt: number;
-  resolvedAt?: number;
+  format?: "markdown" | "html"
+  content?: string
+  error?: string
+  requestedAt: number
+  resolvedAt?: number
 }
 
 /** A free-form message from Claude shown in the chat column (summary, status...). */
 export interface Note {
-  id: string;
-  markdown: string;
-  createdAt: number;
+  id: string
+  markdown: string
+  createdAt: number
 }
 
-export type SessionStatus = "open" | "closed";
+export type SessionStatus = "open" | "closed"
 
 export interface Session {
-  id: string;
-  title: string;
-  status: SessionStatus;
-  createdAt: number;
-  closedAt?: number;
-  rounds: Round[];
-  asides: Aside[];
-  notes: Note[];
+  id: string
+  title: string
+  status: SessionStatus
+  createdAt: number
+  closedAt?: number
+  rounds: Round[]
+  asides: Aside[]
+  notes: Note[]
   /** Number of browser tabs currently connected. */
-  clients: number;
+  clients: number
 }
 
 /* ---------- WebSocket protocol ---------- */
 
 export type ServerMessage =
   | { type: "state"; session: Session }
-  | { type: "error"; message: string };
+  | { type: "error"; message: string }
 
 export type ClientMessage =
-  | { type: "answer"; roundId: string; questionId: string; answer: Omit<Answer, "answeredAt"> }
+  | {
+      type: "answer"
+      roundId: string
+      questionId: string
+      answer: Omit<Answer, "answeredAt">
+    }
   | { type: "clear_answer"; roundId: string; questionId: string }
   | { type: "submit_round"; roundId: string }
-  | { type: "request_aside"; roundId: string; questionId: string; kind: AsideKind };
+  | {
+      type: "request_aside"
+      roundId: string
+      questionId: string
+      kind: AsideKind
+    }

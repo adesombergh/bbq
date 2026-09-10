@@ -1,6 +1,7 @@
 node_modules/
 ui/dist/
 .fallow/
+.cache/
 *.log
 .DS_Store
 .claude/settings.local.json

@@ -13,327 +13,420 @@ import type {
   Question,
   Round,
   Session,
-} from "./types.ts";
+} from "./types.ts"
 
-export class StateError extends Error {}
+import { canAnswer, isComplete } from "./round-rules.ts"
+import { StateError } from "./state-error.ts"
 
-type Listener = (session: Session) => void;
+type Listener = (session: Session) => void
+
+const ID_LENGTH = 8
+const LETTER_A = 97
 
 export function newId(prefix: string): string {
-  return `${prefix}_${crypto.randomUUID().slice(0, 8)}`;
+  return `${prefix}_${crypto.randomUUID().slice(0, ID_LENGTH)}`
+}
+
+/** Option ids default to a, b, c… */
+function defaultOptionId(index: number): string {
+  return String.fromCodePoint(LETTER_A + index)
 }
 
 export interface QuestionInput {
-  id?: string;
-  title: string;
-  body: string;
-  options?: { id?: string; label: string; description?: string }[];
-  recommendation: string;
-  recommendedOptionId?: string;
+  id?: string
+  title: string
+  body: string
+  options?: { id?: string; label: string; description?: string }[]
+  recommendation: string
+  recommendedOptionId?: string
+}
+
+function buildQuestion(
+  input: QuestionInput,
+  index: number,
+  roundIndex: number
+): Question {
+  const options = (input.options ?? []).map((o, j) => ({
+    description: o.description,
+    id: o.id ?? defaultOptionId(j),
+    label: o.label,
+  }))
+  const ids = new Set(options.map((o) => o.id))
+  if (ids.size !== options.length) {
+    throw new StateError(`Duplicate option ids in question ${index + 1}`)
+  }
+  const { recommendedOptionId } = input
+  if (recommendedOptionId !== undefined && !ids.has(recommendedOptionId)) {
+    throw new StateError(
+      `Question ${index + 1}: recommendedOptionId "${recommendedOptionId}" is not one of the options`
+    )
+  }
+  return {
+    body: input.body,
+    id: input.id ?? `r${roundIndex}q${index + 1}`,
+    options,
+    recommendation: input.recommendation,
+    recommendedOptionId,
+    title: input.title,
+  }
+}
+
+function resolveAnswer(
+  question: Question,
+  answer: Omit<Answer, "answeredAt">
+): Answer {
+  const answeredAt = Date.now()
+  switch (answer.kind) {
+    case "recommended": {
+      const { recommendedOptionId } = question
+      if (recommendedOptionId === undefined) {
+        return {
+          answeredAt,
+          kind: "recommended",
+          text: question.recommendation,
+        }
+      }
+      const option = question.options.find((o) => o.id === recommendedOptionId)
+      return {
+        answeredAt,
+        kind: "recommended",
+        optionId: recommendedOptionId,
+        text: option?.label ?? question.recommendation,
+      }
+    }
+    case "option": {
+      const option = question.options.find((o) => o.id === answer.optionId)
+      if (!option) {
+        throw new StateError(`Unknown option ${answer.optionId ?? "(none)"}`)
+      }
+      return {
+        answeredAt,
+        kind: "option",
+        optionId: option.id,
+        text: option.label,
+      }
+    }
+    case "text": {
+      if (answer.text.trim() === "") {
+        throw new StateError("Empty answer")
+      }
+      return { answeredAt, kind: "text", text: answer.text }
+    }
+    default: {
+      throw new StateError("Unknown answer kind")
+    }
+  }
 }
 
 export class Store {
-  private sessions = new Map<string, Session>();
-  private listeners = new Map<string, Set<Listener>>();
+  private readonly sessions = new Map<string, Session>()
+  private readonly listeners = new Map<string, Set<Listener>>()
 
   /* ---------- sessions ---------- */
 
   createSession(title: string): Session {
     const session: Session = {
-      id: newId("s"),
-      title,
-      status: "open",
-      createdAt: Date.now(),
-      rounds: [],
       asides: [],
-      notes: [],
       clients: 0,
-    };
-    this.sessions.set(session.id, session);
-    return session;
+      createdAt: Date.now(),
+      id: newId("s"),
+      notes: [],
+      rounds: [],
+      status: "open",
+      title,
+    }
+    this.sessions.set(session.id, session)
+    return session
   }
 
   get(sessionId: string): Session {
-    const s = this.sessions.get(sessionId);
-    if (!s) throw new StateError(`Unknown session ${sessionId}`);
-    return s;
+    const session = this.sessions.get(sessionId)
+    if (!session) {
+      throw new StateError(`Unknown session ${sessionId}`)
+    }
+    return session
   }
 
   has(sessionId: string): boolean {
-    return this.sessions.has(sessionId);
+    return this.sessions.has(sessionId)
   }
 
   list(): Session[] {
-    return [...this.sessions.values()];
+    return [...this.sessions.values()]
   }
 
   closeSession(sessionId: string): Session {
-    const s = this.get(sessionId);
-    if (s.status === "open") {
-      s.status = "closed";
-      s.closedAt = Date.now();
-      this.emit(s);
+    const session = this.get(sessionId)
+    if (session.status === "open") {
+      session.status = "closed"
+      session.closedAt = Date.now()
+      this.emit(session)
     }
-    return s;
+    return session
   }
 
   setClients(sessionId: string, delta: number): Session {
-    const s = this.get(sessionId);
-    s.clients = Math.max(0, s.clients + delta);
-    this.emit(s);
-    return s;
+    const session = this.get(sessionId)
+    session.clients = Math.max(0, session.clients + delta)
+    this.emit(session)
+    return session
   }
 
   /* ---------- rounds ---------- */
 
-  addRound(sessionId: string, questions: QuestionInput[], intro?: string): Round {
-    const s = this.get(sessionId);
-    if (s.status !== "open") throw new StateError("Session is closed");
-    if (questions.length === 0) throw new StateError("A round needs at least one question");
-    const open = s.rounds.find((r) => r.status === "open");
-    if (open) throw new StateError(`Round ${open.id} is still open; wait for it before asking another`);
+  addRound(
+    sessionId: string,
+    questions: QuestionInput[],
+    intro?: string
+  ): Round {
+    const session = this.get(sessionId)
+    if (session.status !== "open") {
+      throw new StateError("Session is closed")
+    }
+    if (questions.length === 0) {
+      throw new StateError("A round needs at least one question")
+    }
+    const open = session.rounds.find((r) => r.status === "open")
+    if (open) {
+      throw new StateError(
+        `Round ${open.id} is still open; wait for it before asking another`
+      )
+    }
 
-    const roundIndex = s.rounds.length + 1;
-    const qs: Question[] = questions.map((q, i) => {
-      const options = (q.options ?? []).map((o, j) => ({
-        id: o.id ?? String.fromCharCode(97 + j), // a, b, c...
-        label: o.label,
-        description: o.description,
-      }));
-      const ids = new Set(options.map((o) => o.id));
-      if (ids.size !== options.length) throw new StateError(`Duplicate option ids in question ${i + 1}`);
-      if (q.recommendedOptionId && !ids.has(q.recommendedOptionId)) {
-        throw new StateError(
-          `Question ${i + 1}: recommendedOptionId "${q.recommendedOptionId}" is not one of the options`,
-        );
-      }
-      return {
-        id: q.id ?? `r${roundIndex}q${i + 1}`,
-        title: q.title,
-        body: q.body,
-        options,
-        recommendation: q.recommendation,
-        recommendedOptionId: q.recommendedOptionId,
-      };
-    });
-    const qids = new Set(qs.map((q) => q.id));
-    if (qids.size !== qs.length) throw new StateError("Duplicate question ids");
+    const roundIndex = session.rounds.length + 1
+    const built = questions.map((q, i) => buildQuestion(q, i, roundIndex))
+    const questionIds = new Set(built.map((q) => q.id))
+    if (questionIds.size !== built.length) {
+      throw new StateError("Duplicate question ids")
+    }
 
     const round: Round = {
+      answers: {},
+      createdAt: Date.now(),
       id: newId("r"),
       index: roundIndex,
       intro,
-      questions: qs,
-      answers: {},
+      questions: built,
       status: "open",
-      createdAt: Date.now(),
-    };
-    s.rounds.push(round);
-    this.emit(s);
-    return round;
+    }
+    session.rounds.push(round)
+    this.emit(session)
+    return round
   }
 
   getRound(sessionId: string, roundId: string): Round {
-    const r = this.get(sessionId).rounds.find((r) => r.id === roundId);
-    if (!r) throw new StateError(`Unknown round ${roundId}`);
-    return r;
+    const round = this.get(sessionId).rounds.find((r) => r.id === roundId)
+    if (!round) {
+      throw new StateError(`Unknown round ${roundId}`)
+    }
+    return round
   }
 
   /** Find the session owning a round. */
   findRound(roundId: string): { session: Session; round: Round } {
     for (const session of this.sessions.values()) {
-      const round = session.rounds.find((r) => r.id === roundId);
-      if (round) return { session, round };
+      const round = session.rounds.find((r) => r.id === roundId)
+      if (round) {
+        return { round, session }
+      }
     }
-    throw new StateError(`Unknown round ${roundId}`);
+    throw new StateError(`Unknown round ${roundId}`)
   }
 
-  /**
-   * Gating rule: question N can be answered only once every earlier question
-   * in the round has an answer. Changing an already-answered question is
-   * always allowed while the round is open.
-   */
-  canAnswer(round: Round, questionId: string): boolean {
-    if (round.status !== "open") return false;
-    const idx = round.questions.findIndex((q) => q.id === questionId);
-    if (idx < 0) return false;
-    return round.questions.slice(0, idx).every((q) => round.answers[q.id] !== undefined);
-  }
-
-  setAnswer(sessionId: string, roundId: string, questionId: string, answer: Omit<Answer, "answeredAt">): Round {
-    const s = this.get(sessionId);
-    const round = this.getRound(sessionId, roundId);
-    if (round.status !== "open") throw new StateError("Round already submitted");
-    const q = round.questions.find((q) => q.id === questionId);
-    if (!q) throw new StateError(`Unknown question ${questionId}`);
-    if (!this.canAnswer(round, questionId)) throw new StateError("Answer the previous questions first");
-
-    let resolved: Answer = { ...answer, answeredAt: Date.now() };
-    if (answer.kind === "recommended") {
-      resolved = q.recommendedOptionId
-        ? {
-            kind: "recommended",
-            optionId: q.recommendedOptionId,
-            text: q.options.find((o) => o.id === q.recommendedOptionId)?.label ?? q.recommendation,
-            answeredAt: resolved.answeredAt,
-          }
-        : { kind: "recommended", text: q.recommendation, answeredAt: resolved.answeredAt };
-    } else if (answer.kind === "option") {
-      const opt = q.options.find((o) => o.id === answer.optionId);
-      if (!opt) throw new StateError(`Unknown option ${answer.optionId}`);
-      resolved = { kind: "option", optionId: opt.id, text: opt.label, answeredAt: resolved.answeredAt };
-    } else if (!answer.text.trim()) {
-      throw new StateError("Empty answer");
+  setAnswer(
+    sessionId: string,
+    roundId: string,
+    questionId: string,
+    answer: Omit<Answer, "answeredAt">
+  ): Round {
+    const session = this.get(sessionId)
+    const round = this.getRound(sessionId, roundId)
+    if (round.status !== "open") {
+      throw new StateError("Round already submitted")
     }
-    round.answers[questionId] = resolved;
-    this.emit(s);
-    return round;
+    const question = round.questions.find((q) => q.id === questionId)
+    if (!question) {
+      throw new StateError(`Unknown question ${questionId}`)
+    }
+    if (!canAnswer(round, questionId)) {
+      throw new StateError("Answer the previous questions first")
+    }
+    round.answers[questionId] = resolveAnswer(question, answer)
+    this.emit(session)
+    return round
   }
 
   clearAnswer(sessionId: string, roundId: string, questionId: string): Round {
-    const s = this.get(sessionId);
-    const round = this.getRound(sessionId, roundId);
-    if (round.status !== "open") throw new StateError("Round already submitted");
-    delete round.answers[questionId];
-    this.emit(s);
-    return round;
-  }
-
-  isComplete(round: Round): boolean {
-    return round.questions.every((q) => round.answers[q.id] !== undefined);
+    const session = this.get(sessionId)
+    const round = this.getRound(sessionId, roundId)
+    if (round.status !== "open") {
+      throw new StateError("Round already submitted")
+    }
+    round.answers = Object.fromEntries(
+      Object.entries(round.answers).filter(([id]) => id !== questionId)
+    )
+    this.emit(session)
+    return round
   }
 
   submitRound(sessionId: string, roundId: string): Round {
-    const s = this.get(sessionId);
-    const round = this.getRound(sessionId, roundId);
-    if (round.status !== "open") return round;
-    if (!this.isComplete(round)) throw new StateError("Answer every question before submitting");
-    round.status = "submitted";
-    round.submittedAt = Date.now();
-    this.emit(s);
-    return round;
+    const session = this.get(sessionId)
+    const round = this.getRound(sessionId, roundId)
+    if (round.status !== "open") {
+      return round
+    }
+    if (!isComplete(round)) {
+      throw new StateError("Answer every question before submitting")
+    }
+    round.status = "submitted"
+    round.submittedAt = Date.now()
+    this.emit(session)
+    return round
   }
 
   /* ---------- asides (wait-what / show-me / eli5) ---------- */
 
-  requestAside(sessionId: string, roundId: string, questionId: string, kind: AsideKind): Aside {
-    const s = this.get(sessionId);
-    const round = this.getRound(sessionId, roundId);
-    if (!round.questions.some((q) => q.id === questionId)) throw new StateError(`Unknown question ${questionId}`);
+  requestAside(
+    sessionId: string,
+    roundId: string,
+    questionId: string,
+    kind: AsideKind
+  ): Aside {
+    const session = this.get(sessionId)
+    const round = this.getRound(sessionId, roundId)
+    if (!round.questions.some((q) => q.id === questionId)) {
+      throw new StateError(`Unknown question ${questionId}`)
+    }
     // Coalesce: one in-flight aside per (question, kind).
-    const existing = s.asides.find(
-      (a) => a.questionId === questionId && a.kind === kind && (a.status === "requested" || a.status === "claimed"),
-    );
-    if (existing) return existing;
+    const existing = session.asides.find(
+      (a) =>
+        a.questionId === questionId &&
+        a.kind === kind &&
+        (a.status === "requested" || a.status === "claimed")
+    )
+    if (existing) {
+      return existing
+    }
     const aside: Aside = {
       id: newId("a"),
-      roundId,
-      questionId,
       kind,
-      status: "requested",
+      questionId,
       requestedAt: Date.now(),
-    };
-    s.asides.push(aside);
-    this.emit(s);
-    return aside;
+      roundId,
+      status: "requested",
+    }
+    session.asides.push(aside)
+    this.emit(session)
+    return aside
   }
 
   /** Mark an aside as being worked on by Claude (so the UI can show progress). */
   claimAside(sessionId: string, asideId: string): Aside {
-    const s = this.get(sessionId);
-    const a = this.getAside(sessionId, asideId);
-    if (a.status === "requested") {
-      a.status = "claimed";
-      this.emit(s);
+    const session = this.get(sessionId)
+    const aside = this.getAside(sessionId, asideId)
+    if (aside.status === "requested") {
+      aside.status = "claimed"
+      this.emit(session)
     }
-    return a;
+    return aside
   }
 
-  resolveAside(sessionId: string, asideId: string, format: "markdown" | "html", content: string): Aside {
-    const s = this.get(sessionId);
-    const a = this.getAside(sessionId, asideId);
-    a.status = "resolved";
-    a.format = format;
-    a.content = content;
-    a.resolvedAt = Date.now();
-    this.emit(s);
-    return a;
+  resolveAside(
+    sessionId: string,
+    asideId: string,
+    format: "markdown" | "html",
+    content: string
+  ): Aside {
+    const session = this.get(sessionId)
+    const aside = this.getAside(sessionId, asideId)
+    aside.status = "resolved"
+    aside.format = format
+    aside.content = content
+    aside.resolvedAt = Date.now()
+    this.emit(session)
+    return aside
   }
 
   failAside(sessionId: string, asideId: string, error: string): Aside {
-    const s = this.get(sessionId);
-    const a = this.getAside(sessionId, asideId);
-    a.status = "failed";
-    a.error = error;
-    a.resolvedAt = Date.now();
-    this.emit(s);
-    return a;
+    const session = this.get(sessionId)
+    const aside = this.getAside(sessionId, asideId)
+    aside.status = "failed"
+    aside.error = error
+    aside.resolvedAt = Date.now()
+    this.emit(session)
+    return aside
   }
 
   getAside(sessionId: string, asideId: string): Aside {
-    const a = this.get(sessionId).asides.find((a) => a.id === asideId);
-    if (!a) throw new StateError(`Unknown aside ${asideId}`);
-    return a;
+    const aside = this.get(sessionId).asides.find((a) => a.id === asideId)
+    if (!aside) {
+      throw new StateError(`Unknown aside ${asideId}`)
+    }
+    return aside
   }
 
   pendingAsides(sessionId: string): Aside[] {
-    return this.get(sessionId).asides.filter((a) => a.status === "requested");
+    return this.get(sessionId).asides.filter((a) => a.status === "requested")
   }
 
   /* ---------- notes ---------- */
 
   addNote(sessionId: string, markdown: string): Note {
-    const s = this.get(sessionId);
-    const note: Note = { id: newId("n"), markdown, createdAt: Date.now() };
-    s.notes.push(note);
-    this.emit(s);
-    return note;
+    const session = this.get(sessionId)
+    const note: Note = { createdAt: Date.now(), id: newId("n"), markdown }
+    session.notes.push(note)
+    this.emit(session)
+    return note
   }
 
   /* ---------- WS client messages ---------- */
 
-  /** Apply a message coming from a browser. Throws StateError on invalid input. */
+  /** Apply a validated message coming from a browser. Throws StateError on invalid state. */
   apply(sessionId: string, msg: ClientMessage): void {
     switch (msg.type) {
-      case "answer":
-        this.setAnswer(sessionId, msg.roundId, msg.questionId, msg.answer);
-        return;
-      case "clear_answer":
-        this.clearAnswer(sessionId, msg.roundId, msg.questionId);
-        return;
-      case "submit_round":
-        this.submitRound(sessionId, msg.roundId);
-        return;
-      case "request_aside":
-        this.requestAside(sessionId, msg.roundId, msg.questionId, msg.kind);
-        return;
-      default:
-        throw new StateError(`Unknown message type ${(msg as { type: string }).type}`);
+      case "answer": {
+        this.setAnswer(sessionId, msg.roundId, msg.questionId, msg.answer)
+        break
+      }
+      case "clear_answer": {
+        this.clearAnswer(sessionId, msg.roundId, msg.questionId)
+        break
+      }
+      case "submit_round": {
+        this.submitRound(sessionId, msg.roundId)
+        break
+      }
+      case "request_aside": {
+        this.requestAside(sessionId, msg.roundId, msg.questionId, msg.kind)
+        break
+      }
+      default: {
+        throw new StateError(`Unknown message ${JSON.stringify(msg)}`)
+      }
     }
   }
 
   /* ---------- subscriptions ---------- */
 
   subscribe(sessionId: string, fn: Listener): () => void {
-    let set = this.listeners.get(sessionId);
-    if (!set) {
-      set = new Set();
-      this.listeners.set(sessionId, set);
-    }
-    set.add(fn);
+    const set = this.listeners.get(sessionId) ?? new Set<Listener>()
+    this.listeners.set(sessionId, set)
+    set.add(fn)
     return () => {
-      set!.delete(fn);
-    };
+      set.delete(fn)
+    }
   }
 
   private emit(session: Session): void {
-    const set = this.listeners.get(session.id);
-    if (!set) return;
+    const set = this.listeners.get(session.id)
+    if (!set) {
+      return
+    }
     for (const fn of set) {
       try {
-        fn(session);
-      } catch (err) {
-        console.error("[grill-ui] listener error", err);
+        fn(session)
+      } catch (error) {
+        console.error("[grill-ui] listener error", error)
       }
     }
   }
@@ -343,23 +436,42 @@ export class Store {
    * with `undefined` after `timeoutMs`. Checks immediately first. This is the
    * only blocking primitive the MCP tools use, and it never outlives its timeout.
    */
-  waitFor<T>(sessionId: string, predicate: (s: Session) => T | undefined, timeoutMs: number): Promise<T | undefined> {
-    const now = predicate(this.get(sessionId));
-    if (now !== undefined) return Promise.resolve(now);
-    return new Promise((resolve) => {
-      let done = false;
-      const finish = (v: T | undefined) => {
-        if (done) return;
-        done = true;
-        clearTimeout(timer);
-        unsub();
-        resolve(v);
-      };
-      const unsub = this.subscribe(sessionId, (s) => {
-        const v = predicate(s);
-        if (v !== undefined) finish(v);
-      });
-      const timer = setTimeout(() => finish(undefined), timeoutMs);
-    });
+  async waitFor<T>(
+    sessionId: string,
+    predicate: (s: Session) => T | undefined,
+    timeoutMs: number
+  ): Promise<T | undefined> {
+    const now = predicate(this.get(sessionId))
+    if (now !== undefined) {
+      return now
+    }
+    const { promise, resolve } = Promise.withResolvers<T | undefined>()
+    const cleanups: (() => void)[] = []
+    let done = false
+    const finish = (value?: T): void => {
+      if (done) {
+        return
+      }
+      done = true
+      for (const cleanup of cleanups) {
+        cleanup()
+      }
+      resolve(value)
+    }
+    cleanups.push(
+      this.subscribe(sessionId, (session) => {
+        const value = predicate(session)
+        if (value !== undefined) {
+          finish(value)
+        }
+      })
+    )
+    const timer = setTimeout(() => {
+      finish()
+    }, timeoutMs)
+    cleanups.push(() => {
+      clearTimeout(timer)
+    })
+    return await promise
   }
 }

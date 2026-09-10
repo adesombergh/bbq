@@ -24,4 +24,4 @@ Run the `grilling` skill exactly as written (design tree, frontier, rounds, one 
 - Facts are yours to find (sub-agents), decisions are the user's. Never put a lookup in a question.
 - Never block waiting for the user in the terminal; `wait_for_answers` is the only wait and it is safe to loop.
 - Keep terminal output to one line per round at most. The user is reading the browser.
-- Asides answer the *question as asked*; never add options or change the recommendation inside an aside.
+- Asides answer the _question as asked_; never add options or change the recommendation inside an aside.
