@@ -20,7 +20,7 @@
     "url": "git+https://github.com/adesombergh/bbq.git"
   },
   "bin": {
-    "bbq-mcp": "./src/mcp.ts"
+    "bbq-mcp": "src/mcp.ts"
   },
   "workspaces": [
     "ui"

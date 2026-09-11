@@ -47,7 +47,7 @@ describe("npm package", () => {
     const pkg = await readJson("package.json", packageSchema)
     expect(pkg.name).toBe("bbq-mcp")
     expect(pkg.private).toBe(false)
-    expect(pkg.bin).toEqual({ "bbq-mcp": "./src/mcp.ts" })
+    expect(pkg.bin).toEqual({ "bbq-mcp": "src/mcp.ts" })
     expect(pkg.files).toContain("src")
     expect(pkg.files).toContain("ui/dist")
     expect(pkg.files).toContain("skills")
