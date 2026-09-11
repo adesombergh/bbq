@@ -2,7 +2,7 @@
   "name": "bbq-mcp",
   "displayName": "bbq",
   "version": "0.1.0",
-  "description": "Grill a plan in the browser: Claude asks rounds of questions in a local web UI instead of the terminal.",
+  "description": "Don’t grill your brain. A browser UI for Claude Code grilling sessions.",
   "author": {
     "name": "Aldebaran Desombergh",
     "url": "https://github.com/adesombergh"

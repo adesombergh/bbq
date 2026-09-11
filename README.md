@@ -1,14 +1,23 @@
 # bbq 🔥🍖
 
-An MCP server that gives Claude Code a browser UI for long grilling sessions
-(the `grilling` skill: relentless, multi-round interrogation of a plan).
+**Don’t grill your brain.**
 
-Terminal Q&A collapses under a long grilling: each question packs a lot of
-information into few words and the rounds scroll away. bbq replaces that
-with a local web app. Claude pushes rounds of questions into it; you answer
-with buttons or free text, and for any question you can ask for a re-pitch
-(**Wait what**), a visual (**Show me**, which may come back as a diagram) or a
-plain-language explainer (**ELI5**), which open in a contextual panel on the right.
+A browser UI for Claude Code grilling sessions.
+
+Long grilling sessions are cognitively expensive: code-heavy questions are
+information-dense, while the terminal mixes questions, options,
+recommendations, and answers into one scrolling stream.
+
+bbq moves grilling into a dedicated UI. Questions, choices, context, and
+follow-ups are structured and easy to scan, so you can spend your attention on
+the decisions—not on parsing the conversation.
+
+It is an MCP server plus a `bbq` skill that runs the `grilling` skill (a
+relentless, multi-round interrogation of a plan) in the browser. Claude pushes
+rounds of questions into it; you answer with buttons or free text, and on any
+question you can ask for a re-pitch (**Wait what**), a visual (**Show me**,
+which may come back as a diagram) or a plain-language explainer (**ELI5**),
+which open in a contextual panel on the right.
 
 ![A round in the browser: question, options, recommendation, and a diagram in the side panel](https://raw.githubusercontent.com/adesombergh/bbq/main/docs/screenshot.png)
 

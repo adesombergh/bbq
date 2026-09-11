@@ -2,7 +2,7 @@
   "name": "bbq-mcp",
   "version": "0.1.0",
   "private": false,
-  "description": "MCP server that gives Claude Code a browser UI for long grilling sessions",
+  "description": "Don’t grill your brain. A browser UI for Claude Code grilling sessions.",
   "keywords": [
     "bun",
     "claude-code",

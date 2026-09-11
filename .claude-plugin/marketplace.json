@@ -8,7 +8,7 @@
     {
       "name": "bbq-mcp",
       "source": "./",
-      "description": "Grill a plan in the browser: Claude asks rounds of questions in a local web UI instead of the terminal.",
+      "description": "Don’t grill your brain. A browser UI for Claude Code grilling sessions.",
       "version": "0.1.0"
     }
   ]
