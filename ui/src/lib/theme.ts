@@ -14,7 +14,7 @@ export type Theme = (typeof THEMES)[number]
 /** What `system` resolves to: the only thing the DOM ever carries. */
 export type ResolvedTheme = "light" | "dark"
 
-const STORAGE_KEY = "grill-ui:theme"
+const STORAGE_KEY = "bbq:theme"
 
 const isTheme = (value: unknown): value is Theme =>
   typeof value === "string" && THEMES.some((known) => known === value)

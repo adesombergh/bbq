@@ -447,7 +447,7 @@ export class Store {
       try {
         fn(session)
       } catch (error) {
-        console.error("[grill-ui] listener error", error)
+        console.error("[bbq] listener error", error)
       }
     }
   }

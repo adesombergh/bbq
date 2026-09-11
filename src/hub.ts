@@ -16,7 +16,7 @@ import path from "node:path"
 
 import { parseClientMessage } from "./protocol.ts"
 
-const COOKIE = "grill_token"
+const COOKIE = "bbq_token"
 const ONE_YEAR_SECONDS = 31_536_000
 const TRAVERSAL_PREFIX = /^(?<dots>\.\.[/\\])+/u
 
@@ -41,7 +41,7 @@ export interface HubOptions {
 }
 
 function log(...args: unknown[]): void {
-  console.error("[grill-ui]", ...args)
+  console.error("[bbq]", ...args)
 }
 
 function readCookie(req: Request): string | undefined {
@@ -69,11 +69,11 @@ function encode(message: ServerMessage): string {
 }
 
 function placeholderHtml(): string {
-  return `<!doctype html><meta charset="utf-8"><title>grill-ui</title>
+  return `<!doctype html><meta charset="utf-8"><title>bbq</title>
 <body style="font:16px system-ui;background:#111;color:#eee;padding:3rem;max-width:40rem;margin:auto">
-<h1>grill-ui</h1>
+<h1>bbq</h1>
 <p>The UI bundle is missing. Build it once, then reload this page:</p>
-<pre style="background:#222;padding:1rem;border-radius:.5rem">cd &lt;grill-ui&gt; &amp;&amp; bun install &amp;&amp; bun run build</pre>
+<pre style="background:#222;padding:1rem;border-radius:.5rem">cd &lt;bbq&gt; &amp;&amp; bun install &amp;&amp; bun run build</pre>
 <p>The MCP server never runs the bundler itself (stdout belongs to MCP, and startup must stay instant).</p>
 </body>`
 }

@@ -70,14 +70,14 @@ describe("hub", () => {
     const res = await fetch(`http://127.0.0.1:${hub.port}/?token=${token}`)
     expect(res.status).toBe(200)
     const cookie = res.headers.get("set-cookie") ?? ""
-    expect(cookie).toContain("grill_token=tok123")
+    expect(cookie).toContain("bbq_token=tok123")
     expect(cookie).toContain("HttpOnly")
     const res2 = await fetch(`http://127.0.0.1:${hub.port}/api/sessions`, {
-      headers: { cookie: "grill_token=tok123" },
+      headers: { cookie: "bbq_token=tok123" },
     })
     expect(res2.status).toBe(200)
     const bad = await fetch(`http://127.0.0.1:${hub.port}/api/sessions`, {
-      headers: { cookie: "grill_token=wrong" },
+      headers: { cookie: "bbq_token=wrong" },
     })
     expect(bad.status).toBe(403)
   })

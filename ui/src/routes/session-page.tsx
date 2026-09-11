@@ -78,7 +78,7 @@ export const SessionPage = () => {
   const status = useSelector(connection.store, (state) => state.status)
   const error = useSelector(connection.store, (state) => state.error)
   const { mutate: send } = useSendMessage(sessionId)
-  const layout = useDefaultLayout({ id: "grill-ui-layout" })
+  const layout = useDefaultLayout({ id: "bbq-layout" })
   const handleLayoutChanged = layout.onLayoutChanged
 
   const setSearch = (patch: Partial<typeof search>): void => {
@@ -128,7 +128,7 @@ export const SessionPage = () => {
       <ResizablePanelGroup
         className="min-h-0 flex-1"
         defaultLayout={layout.defaultLayout}
-        id="grill-ui-layout"
+        id="bbq-layout"
         onLayoutChanged={handleLayoutChanged}
         orientation="horizontal"
       >

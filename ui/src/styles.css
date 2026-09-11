@@ -41,7 +41,7 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-/* The original grill-ui hues, mapped onto the shadcn token vocabulary. Dark is
+/* The original bbq hues, mapped onto the shadcn token vocabulary. Dark is
    also on bare :root so a page whose inline script never ran still reads. */
 :root {
   --radius: 0.75rem;

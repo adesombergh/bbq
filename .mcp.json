@@ -1,6 +1,6 @@
 {
   "mcpServers": {
-    "grill-ui": {
+    "bbq": {
       "command": "bun",
       "args": ["run", "./src/mcp.ts"]
     }

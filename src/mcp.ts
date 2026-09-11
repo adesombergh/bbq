@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 /**
- * grill-ui MCP server (stdio).
+ * bbq MCP server (stdio).
  *
  * stdout is the JSON-RPC channel: every log goes to console.error.
  * The hub (HTTP + WS) starts immediately on 127.0.0.1:0 and serves the
@@ -28,11 +28,11 @@ import { Store } from "./state.ts"
 import { ASIDE_KINDS } from "./types.ts"
 
 function log(...args: unknown[]): void {
-  console.error("[grill-ui]", ...args)
+  console.error("[bbq]", ...args)
 }
 
-/** Default poll length. Override with GRILL_UI_WAIT_MS. */
-const DEFAULT_WAIT_MS = Number(process.env.GRILL_UI_WAIT_MS ?? 55_000)
+/** Default poll length. Override with BBQ_WAIT_MS. */
+const DEFAULT_WAIT_MS = Number(process.env.BBQ_WAIT_MS ?? 55_000)
 /** Hard cap: stays under Claude Code's 5 min idle cutoff with margin. */
 const MAX_WAIT_MS = 280_000
 const MIN_WAIT_MS = 1000
@@ -189,20 +189,22 @@ function answeredReport(round: Round): string {
     "",
     formatAnswers(round),
     "",
-    "Next: recompute the frontier. If it is non-empty, ask_round again. If it is empty, post_note a summary of the " +
-      "shared understanding and ask the user to confirm it (as a final one-question round), then close_session.",
+    "Next: recompute the frontier. If it is non-empty, ask_round again. If it is empty, run the last round: post_note " +
+      "the full shared understanding, then ask ONE short question whose options are the four destinations — Just send " +
+      "to Claude / /implement / /to-spec / /to-tickets — then close_session. The skill's 'The last round' section has " +
+      "the rest: which to recommend, and what to do with the answer.",
   ].join("\n")
 }
 
 /* ---------- server ---------- */
 
-const server = new McpServer({ name: "grill-ui", version: "0.1.0" })
+const server = new McpServer({ name: "bbq", version: "0.1.0" })
 
 server.registerTool(
   "open_session",
   {
     description:
-      "Start a grill-ui session and open the browser UI. Blocks until a browser tab connects (at most waitForBrowserMs) " +
+      "Start a bbq session and open the browser UI. Blocks until a browser tab connects (at most waitForBrowserMs) " +
       "and returns the sessionId and URL. Call once per grilling session, then use ask_round / wait_for_answers.",
     inputSchema: {
       shortTitle: z

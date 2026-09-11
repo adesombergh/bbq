@@ -13,7 +13,7 @@ function openCommand(url: string): string[] {
 }
 
 export function openBrowser(url: string): boolean {
-  if (process.env.GRILL_UI_NO_OPEN !== undefined) {
+  if (process.env.BBQ_NO_OPEN !== undefined) {
     return false
   }
   try {
@@ -24,7 +24,7 @@ export function openBrowser(url: string): boolean {
     }).unref()
     return true
   } catch (error) {
-    console.error("[grill-ui] could not open browser:", error)
+    console.error("[bbq] could not open browser:", error)
     return false
   }
 }

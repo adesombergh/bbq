@@ -12,7 +12,7 @@ import type { Direction, Run } from "./snake-rules"
 import { canTurn, initialRun, step } from "./snake-rules"
 
 const TICK_MS = 110
-const STORAGE_KEY = "grill-ui:pastime-best"
+const STORAGE_KEY = "bbq:pastime-best"
 
 const ARROWS: Record<string, Direction> = {
   ArrowDown: "down",

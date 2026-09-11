@@ -17,6 +17,11 @@ import { tabLabel, tabState } from "@shared/round-rules"
 
 import { sessionKey } from "./session-query"
 
+/**
+ * One glyph each, and the 🔥🍖 brand mark is deliberately not among them: a
+ * pinned tab is 16px of favicon, and this has to say whose turn it is from
+ * across the room. See docs/adr/0019-the-logo-is-not-the-status-light.md.
+ */
 const FAVICONS: Record<TabState, string> = {
   awaiting: "❓",
   closed: "✅",

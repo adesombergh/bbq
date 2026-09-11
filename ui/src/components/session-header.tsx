@@ -1,7 +1,7 @@
 import type { ConnectionStatus } from "@/lib/session-socket"
 import type { Session } from "@shared/types"
 
-import { Flame } from "lucide-react"
+import { Flame, Ham } from "lucide-react"
 
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Badge } from "@/components/ui/badge"
@@ -28,7 +28,13 @@ export const SessionHeader = ({ session, status }: SessionHeaderProps) => {
   const rounds = session.rounds.length
   return (
     <header className="flex shrink-0 items-center gap-3 border-b bg-secondary px-4 py-3">
-      <Flame aria-hidden className="size-5 text-primary" />
+      <span
+        aria-hidden
+        className="flex shrink-0 items-center gap-0.5 text-primary"
+      >
+        <Flame className="size-5" />
+        <Ham className="size-5" />
+      </span>
       <div className="min-w-0 flex-1">
         <h1 className="truncate font-heading font-semibold">{session.title}</h1>
         <p className="text-xs text-muted-foreground">

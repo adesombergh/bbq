@@ -1,6 +1,6 @@
 # Grilling
 
-A grilling is a relentless, multi-round interview in which Claude stress-tests a person's plan until both sides share the same understanding of it. grill-ui moves that interview from the terminal into a browser page.
+A grilling is a relentless, multi-round interview in which Claude stress-tests a person's plan until both sides share the same understanding of it. bbq moves that interview from the terminal into a browser page.
 
 ## Language
 
@@ -15,7 +15,7 @@ Whether a session also tends the project's documents. Grill-me is the interview 
 _Avoid_: profile, preset, docs mode
 
 **Question budget**:
-The maximum number of questions a session may put to the person. It counts questions inside rounds only: asides are free, the final confirmation round is free, and a decision genuinely reopened counts again. Spent in full, it ends the session by naming the remaining decisions and the recommendation assumed for each.
+The maximum number of questions a session may put to the person. It counts questions inside rounds only: asides are free, the last round — the one that confirms the shared understanding and names the **destination** — is free, and a decision genuinely reopened counts again. Spent in full, it ends the session by naming the remaining decisions and the recommendation assumed for each.
 _Avoid_: limit, quota, max questions
 
 **Session language**:
@@ -35,8 +35,12 @@ One frontier put to the person at once. A round is open until every question has
 _Avoid_: step, page, turn
 
 **Shared understanding**:
-The end state of a session: a summary of every settled decision that the person confirms before any work starts.
+The end state of a session: a summary of every settled decision that the person confirms before any work starts. The press that confirms it also names the **destination**.
 _Avoid_: conclusion, spec
+
+**Destination**:
+Where a confirmed plan goes when the session ends. Four exist and the set never changes: Claude's hands, `/implement`, `/to-spec`, `/to-tickets`. A destination is chosen by the same press that confirms the shared understanding, so it is an ordinary **answer** and nothing about it reaches the Store, the protocol or a **snapshot**. Three of the four are commands only the person can type; choosing one tells Claude what to set them up for, never what to start.
+_Avoid_: hand-off, next step, export, outcome
 
 ### Inside a round
 
@@ -99,7 +103,7 @@ The instructions a tool result carries for one aside kind: what to produce and, 
 _Avoid_: prompt, template, fallback, instructions
 
 **Aside skill**:
-An optional skill that answers one kind of aside better than its brief. Aside skills are third party and per machine; grill-ui bundles none. Available means invocable by Claude, which is narrower than installed: a skill can be present and enabled and still unreachable.
+An optional skill that answers one kind of aside better than its brief. Aside skills are third party and per machine; bbq bundles none. Available means invocable by Claude, which is narrower than installed: a skill can be present and enabled and still unreachable.
 _Avoid_: helper, integration, dependency
 
 **Note**:

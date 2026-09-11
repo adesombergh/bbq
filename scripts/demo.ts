@@ -28,7 +28,7 @@ const env = Object.fromEntries(
   )
 )
 
-const client = new Client({ name: "grill-ui-demo", version: "0.0.0" })
+const client = new Client({ name: "bbq-demo", version: "0.0.0" })
 await client.connect(
   new StdioClientTransport({
     args: ["run", path.resolve(import.meta.dir, "../src/mcp.ts")],

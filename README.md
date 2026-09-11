@@ -1,10 +1,10 @@
-# grill-ui
+# bbq 🔥🍖
 
 An MCP server that gives Claude Code a browser UI for long grilling sessions
 (the `grilling` skill: relentless, multi-round interrogation of a plan).
 
 Terminal Q&A collapses under a long grilling: each question packs a lot of
-information into few words and the rounds scroll away. grill-ui replaces that
+information into few words and the rounds scroll away. bbq replaces that
 with a local web app. Claude pushes rounds of questions into it; you answer
 with buttons or free text, and for any question you can ask for a re-pitch
 (**Wait what**), a visual (**Show me**, which may come back as a diagram) or a
@@ -22,17 +22,22 @@ Register the server in the project you grill from (or globally) — `.mcp.json`:
 ```json
 {
   "mcpServers": {
-    "grill-ui": {
+    "bbq": {
       "command": "bun",
-      "args": ["run", "/path/to/grill-ui/src/mcp.ts"]
+      "args": ["run", "/path/to/bbq/src/mcp.ts"]
     }
   }
 }
 ```
 
-Copy or symlink `skills/grill-ui` where your skills live (`.agents/skills`,
-`.claude/skills`…). Two of the three aside kinds can call an aside skill, both
-third party and both optional:
+Copy or symlink `skills/bbq` where your skills live (`.agents/skills`,
+`.claude/skills`…), and `skills/barbecue` and `skills/churrasco` beside it if
+you want those words to work too — they are short stubs that invoke `bbq`,
+because skill frontmatter has no `aliases` field
+(`docs/adr/0018-aliases-are-stub-skills.md`).
+
+Two of the three aside kinds can call an aside skill, both third party and both
+optional:
 
 ```sh
 npx skills add humanlayer/skills --skill show-me   # Show me
@@ -59,10 +64,30 @@ did not already say when you invoked it:
 - **Mode** — `grill-me`, or `grill-with-docs` to also read this project's
   `CONTEXT.md` and `docs/adr/` and write new terms and decisions as they settle.
 - **Question budget** — a maximum number of questions, no maximum by default. It
-  counts questions inside rounds; asides and the final confirmation are free.
-  Spent in full, Claude names what it did not get to and what it is assuming.
+  counts questions inside rounds; asides and the last round are free. Spent in
+  full, Claude names what it did not get to and what it is assuming.
 - **Language** — English or French. It covers what Claude writes — questions,
   notes, asides — and not the browser's own words or this repo's documents.
+
+### The last round
+
+When the frontier empties, Claude posts the full shared understanding as a note
+and asks one short question whose options are the four **destinations** — where
+the plan goes next:
+
+|                         |                                                              |
+| ----------------------- | ------------------------------------------------------------ |
+| **Just send to Claude** | Claude writes the plan into the terminal and stops.          |
+| **`/implement`**        | …and ends with the line you type to build it.                |
+| **`/to-spec`**          | …and ends with the line you type to publish it as one issue. |
+| **`/to-tickets`**       | …and ends with the line you type to cut it into tickets.     |
+
+Three of the four are `disable-model-invocation` skills, so the answer never
+starts anything — it says what to set you up for, and all three read the
+conversation they are typed in. A free-text answer to that question means "not
+yet": the decision it names reopens and the grilling carries on. Nothing about a
+destination reaches the Store or a snapshot; it is an ordinary answer to an
+ordinary round, and the menu never varies with what you have installed.
 
 ## Try it without Claude
 
@@ -96,7 +121,7 @@ Claude ──MCP stdio──▶ src/mcp.ts ──▶ Store (src/state.ts) ◀─
 ### Polling contract
 
 No tool ever blocks past its timeout. `wait_for_answers` waits at most
-`timeoutMs` (default 55s via `GRILL_UI_WAIT_MS`, hard cap 280s: under Claude
+`timeoutMs` (default 55s via `BBQ_WAIT_MS`, hard cap 280s: under Claude
 Code's 5-minute MCP idle cutoff) and returns `pending` on timeout. Claude just
 calls it again, so a round can sit open for an hour at the cost of one cheap
 tool call per minute. Asides interrupt the wait immediately and are returned
@@ -146,7 +171,7 @@ ui/                 Vite 8 + React 19 (React Compiler) + Tailwind v4, builds to 
   src/components/   Question card, round, aside panel, TanStack Form manual answer, markdown, diagrams
   src/components/ui shadcn components on Base UI (ours to edit)
 scripts/demo.ts     fake Claude for manual testing
-skills/             grill-ui (the protocol Claude follows in the browser)
+skills/             bbq (the protocol Claude follows in the browser), plus the barbecue/churrasco alias stubs
 test/               bun tests for state, protocol and hub
 ```
 
@@ -158,4 +183,4 @@ test/               bun tests for state, protocol and hub
 - `.claude/settings.json` runs `ultracite fix` after every file Claude writes. `CLAUDE.md` holds the rules an agent must know; `AGENTS.md` is the generated ultracite standard.
 - UI state model: TanStack Query owns the session snapshot (fed by the WebSocket), TanStack Router owns the view state in the URL, there is no `useEffect` in `ui/src` (the import is banned by lint) and the React Compiler handles memoisation.
 
-Env: `GRILL_UI_WAIT_MS` default poll length, `GRILL_UI_NO_OPEN=1` to not launch a browser.
+Env: `BBQ_WAIT_MS` default poll length, `BBQ_NO_OPEN=1` to not launch a browser.
