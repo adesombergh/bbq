@@ -19,6 +19,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js"
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { z } from "zod"
 
+import pkg from "../package.json" with { type: "json" }
 import { ASIDE_BRIEFS, briefStep } from "./aside-brief.ts"
 import { openBrowser } from "./browser.ts"
 import { startHub } from "./hub.ts"
@@ -198,7 +199,7 @@ function answeredReport(round: Round): string {
 
 /* ---------- server ---------- */
 
-const server = new McpServer({ name: "bbq", version: "0.1.0" })
+const server = new McpServer({ name: pkg.name, version: pkg.version })
 
 server.registerTool(
   "open_session",

@@ -1,0 +1,38 @@
+name: Release
+
+# Publishes bbq-mcp to npm when a v* tag is pushed. Uses npm trusted
+# publishing (OIDC): no token is stored, and the package gets a provenance
+# attestation. The trusted publisher must be configured once on npmjs.com
+# for this repository and this workflow file (see CONTRIBUTING.md).
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Tag is on main and matches package.json
+        run: |
+          git merge-base --is-ancestor "$GITHUB_SHA" origin/main || { echo "tag $GITHUB_REF_NAME is not on main"; exit 1; }
+          pkg="v$(node -p 'require("./package.json").version')"
+          test "$pkg" = "$GITHUB_REF_NAME" || { echo "tag $GITHUB_REF_NAME != package $pkg"; exit 1; }
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: package.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+      - run: bun install --frozen-lockfile
+      - name: Check and build ui/dist
+        run: bun run check
+      - run: npm publish --provenance --access public

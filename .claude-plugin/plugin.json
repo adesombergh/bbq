@@ -1,0 +1,14 @@
+{
+  "name": "bbq-mcp",
+  "displayName": "bbq",
+  "version": "0.1.0",
+  "description": "Grill a plan in the browser: Claude asks rounds of questions in a local web UI instead of the terminal.",
+  "author": {
+    "name": "Aldebaran Desombergh",
+    "url": "https://github.com/adesombergh"
+  },
+  "homepage": "https://github.com/adesombergh/bbq#readme",
+  "repository": "https://github.com/adesombergh/bbq",
+  "license": "MIT",
+  "keywords": ["mcp", "grilling", "planning", "browser-ui"]
+}

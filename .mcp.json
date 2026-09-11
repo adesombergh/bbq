@@ -1,8 +1,8 @@
 {
   "mcpServers": {
-    "bbq": {
-      "command": "bun",
-      "args": ["run", "./src/mcp.ts"]
+    "bbq-mcp": {
+      "command": "bunx",
+      "args": ["bbq-mcp@0.1.0"]
     }
   }
 }

@@ -1,0 +1,36 @@
+name: Bug report
+description: Something in bbq does not behave as documented
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you did, what you saw, what you expected.
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: How to reproduce
+      description: Steps, or the `bun run demo` variant that shows it.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: bbq-mcp version
+      placeholder: "0.1.0"
+    validations:
+      required: true
+  - type: input
+    id: env
+    attributes:
+      label: Environment
+      placeholder: "macOS 15, Bun 1.4.2, Claude Code 2.x, Chrome"
+  - type: textarea
+    id: logs
+    attributes:
+      label: Server logs
+      description: Lines prefixed `[bbq]` from Claude Code's MCP log, if any.
+      render: text

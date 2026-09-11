@@ -1,0 +1,15 @@
+{
+  "name": "bbq",
+  "owner": {
+    "name": "Aldebaran Desombergh",
+    "url": "https://github.com/adesombergh"
+  },
+  "plugins": [
+    {
+      "name": "bbq-mcp",
+      "source": "./",
+      "description": "Grill a plan in the browser: Claude asks rounds of questions in a local web UI instead of the terminal.",
+      "version": "0.1.0"
+    }
+  ]
+}

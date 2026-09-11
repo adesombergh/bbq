@@ -8,7 +8,7 @@ Run the `grilling` skill exactly as written (design tree, frontier, rounds, one 
 ## Step 0 — settle the session before opening it
 
 Three settings decide how the session runs. Take whatever the invocation already
-gave you (`/bbq with docs, max 20, fr`) and ask for the rest in **one**
+gave you (`/bbq with docs, max 20, fr`, or `/bbq-mcp:bbq …` from the plugin) and ask for the rest in **one**
 `AskUserQuestion` in the terminal, before `open_session`. Skip the question
 entirely when the args answered it. None of the three reaches the server: they
 live here, in this file, and in your head for the length of the session.

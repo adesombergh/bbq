@@ -39,3 +39,4 @@ Hard constraints from the README still hold: stdout belongs to MCP (log with `co
 - Throw `StateError` (`src/state-error.ts`) for invalid transitions; `guard()` in `src/mcp.ts` turns it into an `isError` tool result.
 - Add a test in `test/` for every new Store rule or protocol shape. Tests use `bun:test`.
 - `scripts/demo.ts` plays Claude against the real server; run `bun run demo` to exercise the UI by hand.
+- The version lives in `package.json`, `.claude-plugin/plugin.json`, `.claude-plugin/marketplace.json` and the pinned `bunx bbq-mcp@…` in `.mcp.json`; bump all four together (`test/release-manifests.test.ts` checks). The repo `.mcp.json` is the plugin's server entry, not a dev pointer (`docs/adr/0020`).

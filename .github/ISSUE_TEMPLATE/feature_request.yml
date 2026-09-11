@@ -1,0 +1,20 @@
+name: Feature request
+description: A change to how a grilling session runs or looks
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: The problem
+      description: What is hard or impossible today, during which part of a session.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal
+      description: What you would like instead. Check `docs/adr/` first, some things are deliberate.
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered

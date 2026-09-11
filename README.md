@@ -10,31 +10,48 @@ with buttons or free text, and for any question you can ask for a re-pitch
 (**Wait what**), a visual (**Show me**, which may come back as a diagram) or a
 plain-language explainer (**ELI5**), which open in a contextual panel on the right.
 
+![A round in the browser: question, options, recommendation, and a diagram in the side panel](https://raw.githubusercontent.com/adesombergh/bbq/main/docs/screenshot.png)
+
 ## Install
 
-```sh
-bun install          # one workspace: server + ui deps, installs git hooks
-bun run build        # builds ui/dist once; the MCP server only serves it
+bbq needs [Bun](https://bun.sh) 1.4 or newer; the server is built on
+`Bun.serve`. The browser UI comes prebuilt inside the `bbq-mcp` package, so
+there is nothing to build.
+
+### As a Claude Code plugin (server + skills in one go)
+
+```
+/plugin marketplace add adesombergh/bbq
+/plugin install bbq-mcp@bbq
 ```
 
-Register the server in the project you grill from (or globally) — `.mcp.json`:
+That registers the MCP server (pinned to the plugin's version) and installs
+the `bbq` skill plus its `barbecue` and `churrasco` aliases, namespaced as
+plugin skills are: `/bbq-mcp:bbq`, `/bbq-mcp:barbecue`, `/bbq-mcp:churrasco`.
+Then: "grill me on X with the UI", or `/bbq-mcp:bbq`.
+
+### As a plain MCP server
+
+Add to `.mcp.json` in the project you grill from, or to your user-level config:
 
 ```json
 {
   "mcpServers": {
-    "bbq": {
-      "command": "bun",
-      "args": ["run", "/path/to/bbq/src/mcp.ts"]
+    "bbq-mcp": {
+      "command": "bunx",
+      "args": ["bbq-mcp"]
     }
   }
 }
 ```
 
-Copy or symlink `skills/bbq` where your skills live (`.agents/skills`,
-`.claude/skills`…), and `skills/barbecue` and `skills/churrasco` beside it if
-you want those words to work too — they are short stubs that invoke `bbq`,
-because skill frontmatter has no `aliases` field
+Then copy or symlink `skills/bbq` from this repo where your skills live
+(`.agents/skills`, `.claude/skills`…), and `skills/barbecue` and
+`skills/churrasco` beside it if you want those words to work too — they are
+short stubs that invoke `bbq`, because skill frontmatter has no `aliases` field
 (`docs/adr/0018-aliases-are-stub-skills.md`).
+
+### Optional aside skills
 
 Two of the three aside kinds can call an aside skill, both third party and both
 optional:
@@ -54,7 +71,16 @@ would have done better it says so at the end of the aside with the command
 above. The browser never learns what you have installed
 (`docs/adr/0015-skill-availability-is-not-session-state.md`).
 
-Then: “grill me on X with the UI”.
+### From a clone
+
+```sh
+bun install          # one workspace: server + ui deps, installs git hooks
+bun run build        # builds ui/dist once; the MCP server only serves it
+bun run demo         # plays Claude against the server, opens the browser
+```
+
+See `CONTRIBUTING.md` for running your working copy from Claude Code and for
+the release process.
 
 ### Step 0
 
@@ -88,13 +114,6 @@ conversation they are typed in. A free-text answer to that question means "not
 yet": the decision it names reopens and the grilling carries on. Nothing about a
 destination reaches the Store or a snapshot; it is an ordinary answer to an
 ordinary round, and the menu never varies with what you have installed.
-
-## Try it without Claude
-
-```sh
-bun run demo   # plays Claude: opens the browser, pushes two rounds, answers asides
-bun test
-```
 
 ## Design
 
@@ -172,14 +191,16 @@ ui/                 Vite 8 + React 19 (React Compiler) + Tailwind v4, builds to 
   src/components/ui shadcn components on Base UI (ours to edit)
 scripts/demo.ts     fake Claude for manual testing
 skills/             bbq (the protocol Claude follows in the browser), plus the barbecue/churrasco alias stubs
-test/               bun tests for state, protocol and hub
+.claude-plugin/     plugin + marketplace manifests; .mcp.json is the plugin's pinned server entry
+test/               bun tests for state, protocol, hub and release manifests
 ```
 
 ## Tooling
 
 - `bun run check` is the definition of done: `oxfmt --check`, type-aware `oxlint`, `tsc` for both packages, `bun test`, `vite build`.
-- Lint and format are [ultracite](https://www.ultracite.ai) presets on top of oxlint + oxfmt (`oxlint.config.ts`, `oxfmt.config.ts`), with the same additions as the sibling `vertuo-apps` repo. Zero suppressions.
+- Lint and format are [ultracite](https://www.ultracite.ai) presets on top of oxlint + oxfmt (`oxlint.config.ts`, `oxfmt.config.ts`), with the same additions as a sibling internal repo. Zero suppressions.
 - `lefthook` runs format + lint on staged files before each commit and `bun run check` before each push.
+- Releases: tag `vX.Y.Z`, CI publishes `bbq-mcp` to npm with provenance (`CONTRIBUTING.md`, `docs/adr/0020-distribution-is-npm-wrapped-by-a-plugin.md`).
 - `.claude/settings.json` runs `ultracite fix` after every file Claude writes. `CLAUDE.md` holds the rules an agent must know; `AGENTS.md` is the generated ultracite standard.
 - UI state model: TanStack Query owns the session snapshot (fed by the WebSocket), TanStack Router owns the view state in the URL, there is no `useEffect` in `ui/src` (the import is banned by lint) and the React Compiler handles memoisation.
 

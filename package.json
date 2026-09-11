@@ -1,13 +1,36 @@
 {
-  "name": "bbq",
+  "name": "bbq-mcp",
   "version": "0.1.0",
-  "private": true,
+  "private": false,
   "description": "MCP server that gives Claude Code a browser UI for long grilling sessions",
+  "keywords": [
+    "bun",
+    "claude-code",
+    "claude-code-plugin",
+    "grilling",
+    "mcp",
+    "mcp-server"
+  ],
+  "homepage": "https://github.com/adesombergh/bbq#readme",
+  "bugs": "https://github.com/adesombergh/bbq/issues",
+  "license": "MIT",
+  "author": "Aldebaran Desombergh",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/adesombergh/bbq.git"
+  },
   "bin": {
-    "bbq": "./src/mcp.ts"
+    "bbq-mcp": "./src/mcp.ts"
   },
   "workspaces": [
     "ui"
+  ],
+  "files": [
+    "src",
+    "ui/dist",
+    "skills",
+    "README.md",
+    "LICENSE"
   ],
   "type": "module",
   "scripts": {
@@ -22,7 +45,8 @@
     "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p ui/tsconfig.json",
     "test": "bun test",
     "check": "bun run fmt:check && bun run lint && bun run typecheck && bun run test && bun run build",
-    "prepare": "lefthook install"
+    "prepare": "lefthook install || true",
+    "prepublishOnly": "test -f ui/dist/index.html || { echo 'ui/dist missing: run bun run build'; exit 1; }"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.30.0",
@@ -36,6 +60,9 @@
     "oxlint-tsgolint": "^0.23.0",
     "typescript": "^7.0.2",
     "ultracite": "^7.11.1"
+  },
+  "engines": {
+    "bun": ">=1.4"
   },
   "packageManager": "bun@1.4.2"
 }
