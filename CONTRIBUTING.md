@@ -49,6 +49,17 @@ request.
   `docs/adr/NNNN-slug.md`. Do not "fix" an existing ADR without a new one.
 - Add a line under _Unreleased_ in `CHANGELOG.md`.
 
+## Pull requests
+
+`main` is protected: pushes cannot force or delete it, history stays linear,
+and a pull request needs the `check` job green and every conversation resolved
+before it merges. Merges are squashes, and the branch is deleted afterwards.
+Outside contributors work from a fork; the maintainer can push small changes
+straight to `main`.
+
+Version tags (`v*`) cannot be moved or deleted once pushed, because a released
+version is a published fact.
+
 ## Releasing
 
 The npm package `bbq-mcp` and the Claude Code plugin are one release with one
