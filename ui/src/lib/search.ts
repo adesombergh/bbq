@@ -4,9 +4,8 @@ import { z } from "zod"
 /**
  * Everything the UI needs to restore a view lives in the URL:
  * - q: the active (expanded) question; defaults to the first unanswered one
- * - pick: the option pointed at on the active question and not yet confirmed
- *   (an option id, or "recommended"); see
- *   docs/adr/0017-answering-takes-two-presses.md
+ * - pick: the option id pointed at on the active question and not yet
+ *   confirmed; see docs/adr/0017-answering-takes-two-presses.md
  * - panel: the question whose asides are open in the side panel
  * - tab: which aside kind the panel shows; defaults to the newest
  * - dismissed: the newest aside id when the user closed the panel, so a

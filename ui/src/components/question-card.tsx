@@ -14,7 +14,6 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible"
-import { RECOMMENDED_PICK } from "@/lib/derive"
 import { cn } from "@/lib/utils"
 
 interface QuestionCardProps {
@@ -189,7 +188,6 @@ const QuestionBody = (props: QuestionCardProps) => {
   const { onPick, onAnswer, onAside, onOpenPanel } = props
   const hasOptions = question.options.length > 0
   const wentWithRecommendation = answer?.kind === "recommended"
-  const recommendationPicked = pick === RECOMMENDED_PICK
   return (
     <>
       <Section label={hasOptions ? "Options" : "Open question"}>
@@ -226,13 +224,13 @@ const QuestionBody = (props: QuestionCardProps) => {
           <Md className="flex-1 text-[15px]" text={question.recommendation} />
         </div>
         <div className="mt-3 flex flex-wrap items-center gap-2">
+          {/* One press: the recommendation button is a deliberate act with its
+              own label, not something a reading finger lands on, so it is not
+              gated the way an option row is (ADR 0017). */}
           <Button
-            className={cn(
-              wentWithRecommendation && "bg-ok hover:bg-ok/90",
-              recommendationPicked && "ring-3 ring-ring/50"
-            )}
+            className={cn(wentWithRecommendation && "bg-ok hover:bg-ok/90")}
             onClick={() => {
-              onPick(RECOMMENDED_PICK)
+              onAnswer({ kind: "recommended", text: question.recommendation })
             }}
           >
             {wentWithRecommendation ? <Check data-icon="inline-start" /> : null}
@@ -240,17 +238,6 @@ const QuestionBody = (props: QuestionCardProps) => {
               ? "Going with recommendation"
               : "Go with recommendation"}
           </Button>
-          {recommendationPicked ? (
-            <ConfirmPick
-              label="Confirm recommendation"
-              onConfirm={() => {
-                onAnswer({
-                  kind: "recommended",
-                  text: question.recommendation,
-                })
-              }}
-            />
-          ) : null}
           <span className="flex-1" />
           <AsideButtons
             asides={asides}

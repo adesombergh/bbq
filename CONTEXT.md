@@ -57,7 +57,7 @@ The person's decision on one question: a chosen option, the recommendation taken
 _Avoid_: response, reply, selection
 
 **Pick**:
-The option, or the recommendation, the person has pointed at and not yet confirmed. It reaches no further than the tab: the Store never sees it, the next question stays locked, the answer footer stays empty and the round stays incomplete until a second, explicit press turns it into an **answer**. One pick exists at a time, on the active question; leaving that question forgets it.
+The option the person has pointed at and not yet confirmed. It reaches no further than the tab: the Store never sees it, the next question stays locked, the answer footer stays empty and the round stays incomplete until a second, explicit press turns it into an **answer**. One pick exists at a time, on the active question; leaving that question forgets it. Only options are picked — the recommendation and the manual answer are already deliberate acts, and answer in one press.
 _Avoid_: selection, choice, draft answer, tentative answer
 
 **Manual answer**:
