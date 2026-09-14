@@ -80,11 +80,21 @@ export interface Note {
 
 export type SessionStatus = "open" | "closed"
 
+/**
+ * What a session is for. A grilling runs the grilling skill in the browser and
+ * ends in its last round; an offload only carries the questions of whatever
+ * skill is running, which owns the ending (ADR 0021).
+ */
+export const SESSION_KINDS = ["grilling", "offload"] as const
+
+export type SessionKind = (typeof SESSION_KINDS)[number]
+
 export interface Session {
   id: string
   title: string
   /** Terse label for the browser tab, capped in length. Defaults to `title`. */
   shortTitle: string
+  kind: SessionKind
   status: SessionStatus
   createdAt: number
   closedAt?: number

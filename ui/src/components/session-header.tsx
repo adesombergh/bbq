@@ -19,6 +19,11 @@ const STATUS_DOT: Record<ConnectionStatus, string> = {
   open: "bg-ok",
 }
 
+const KIND_LABEL: Record<Session["kind"], string> = {
+  grilling: "Grilling session",
+  offload: "Offloaded questions",
+}
+
 interface SessionHeaderProps {
   session: Session
   status: ConnectionStatus
@@ -38,8 +43,8 @@ export const SessionHeader = ({ session, status }: SessionHeaderProps) => {
       <div className="min-w-0 flex-1">
         <h1 className="truncate font-heading font-semibold">{session.title}</h1>
         <p className="text-xs text-muted-foreground">
-          Grilling session · {rounds} {rounds === 1 ? "round" : "rounds"} ·{" "}
-          {session.status}
+          {KIND_LABEL[session.kind]} · {rounds}{" "}
+          {rounds === 1 ? "round" : "rounds"} · {session.status}
         </p>
       </div>
       <Badge className="gap-1.5 text-muted-foreground" variant="outline">

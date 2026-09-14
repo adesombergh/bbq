@@ -35,9 +35,10 @@ there is nothing to build.
 ```
 
 That registers the MCP server (pinned to the plugin's version) and installs
-the `bbq` skill plus its `barbecue` and `churrasco` aliases, namespaced as
-plugin skills are: `/bbq-mcp:bbq`, `/bbq-mcp:barbecue`, `/bbq-mcp:churrasco`.
-Then: "grill me on X with the UI", or `/bbq-mcp:bbq`.
+the `bbq` skill plus its `barbecue` and `churrasco` aliases, and `bbq-offload`,
+namespaced as plugin skills are: `/bbq-mcp:bbq`, `/bbq-mcp:barbecue`,
+`/bbq-mcp:churrasco`, `/bbq-mcp:bbq-offload`. Then: "grill me on X with the UI",
+or `/bbq-mcp:bbq`.
 
 ### As a plain MCP server
 
@@ -58,7 +59,8 @@ Then copy or symlink `skills/bbq` from this repo where your skills live
 (`.agents/skills`, `.claude/skills`…), and `skills/barbecue` and
 `skills/churrasco` beside it if you want those words to work too — they are
 short stubs that invoke `bbq`, because skill frontmatter has no `aliases` field
-(`docs/adr/0018-aliases-are-stub-skills.md`).
+(`docs/adr/0018-aliases-are-stub-skills.md`). Add `skills/bbq-offload` too if you
+want to answer other skills' questions in the browser.
 
 ### Optional aside skills
 
@@ -124,6 +126,28 @@ yet": the decision it names reopens and the grilling carries on. Nothing about a
 destination reaches the Store or a snapshot; it is an ordinary answer to an
 ordinary round, and the menu never varies with what you have installed.
 
+### Offloading another skill's questions
+
+Grilling is one kind of session. The other is an **offload**: type
+`/bbq-offload` (`/bbq-mcp:bbq-offload`) and whatever skill Claude runs next —
+`superpowers:brainstorming`, a wrapper around it, your own interview skill —
+keeps its flow in the terminal while every question it would ask you arrives in
+the browser, one at a time, as it comes up.
+
+- The running skill owns the ending. There is no frontier, no last round and no
+  destination; bbq only asks.
+- A round sends itself on the answer that completes it: no **Send answers to
+  Claude** press. Picking and confirming an option still take two presses.
+- There is no Step 0. The language follows the conversation (`/bbq-offload fr`
+  overrides it).
+- Close the tab's session and Claude asks the remaining questions in the
+  terminal; it never reopens one on its own.
+- The skill's own browser companion, if it has one, is not offered: **Show me**
+  answers visual questions.
+
+The kind is set on `open_session` and changes the prose each tool result
+carries back to Claude (`docs/adr/0021-offload-is-a-session-kind.md`).
+
 ## Design
 
 **Claude never talks to the browser.** Claude talks to state (`src/state.ts`);
@@ -139,8 +163,8 @@ Claude ──MCP stdio──▶ src/mcp.ts ──▶ Store (src/state.ts) ◀─
 
 | tool                                                   | blocks?                                                  | purpose                                                             |
 | ------------------------------------------------------ | -------------------------------------------------------- | ------------------------------------------------------------------- |
-| `open_session({ title })`                              | until a tab connects (≤ `waitForBrowserMs`, default 30s) | start a session, open the browser                                   |
-| `ask_round({ sessionId, intro?, questions })`          | no                                                       | publish one frontier round                                          |
+| `open_session({ title, kind? })`                       | until a tab connects (≤ `waitForBrowserMs`, default 30s) | start a `grilling` (default) or `offload` session, open the browser |
+| `ask_round({ sessionId, intro?, questions })`          | no                                                       | publish one round: a frontier, or an offloaded question             |
 | `wait_for_answers({ sessionId, roundId, timeoutMs? })` | ≤ `timeoutMs`                                            | poll; returns `answered` / `aside_requested` / `pending` / `closed` |
 | `post_aside({ sessionId, asideId, format, content })`  | no                                                       | deliver a Wait-what / Show-me / ELI5 result to the panel            |
 | `post_note({ sessionId, markdown })`                   | no                                                       | chat bubble between rounds                                          |
@@ -161,7 +185,8 @@ before answers so the user is never left staring at a spinner.
 - Question N unlocks once N-1 is answered. Any answer can be changed until the
   round is sent (click an answered question to reopen it).
 - Answering advances to the next question. When all are answered, **Send
-  answers to Claude** submits the round; the round then freezes.
+  answers to Claude** submits the round; the round then freezes. In an offload
+  session the completing answer submits it and there is no send button.
 - The active card shows three separated blocks: question, options
   (+ manual answer textarea), recommendation (+ _Go with recommendation_, and the
   three aside buttons).
@@ -188,7 +213,8 @@ before answers so the user is never left staring at a spinner.
 ```
 src/mcp.ts          MCP entry (stdio) + tools
 src/state.ts        Store: sessions, rounds, answers, asides, notes, waitFor
-src/round-rules.ts  pure round rules shared with the UI (canAnswer, isComplete)
+src/round-rules.ts  pure round rules shared with the UI (canAnswer, isComplete, sendsOnAnswer)
+src/tool-prose.ts   the next-step prose tool results carry, per session kind
 src/protocol.ts     Zod validation of browser -> hub messages
 src/hub.ts          Bun.serve: static ui/dist, WS relay, token auth
 src/browser.ts      open the default browser without touching stdio
@@ -199,7 +225,7 @@ ui/                 Vite 8 + React 19 (React Compiler) + Tailwind v4, builds to 
   src/components/   Question card, round, aside panel, TanStack Form manual answer, markdown, diagrams
   src/components/ui shadcn components on Base UI (ours to edit)
 scripts/demo.ts     fake Claude for manual testing
-skills/             bbq (the protocol Claude follows in the browser), plus the barbecue/churrasco alias stubs
+skills/             bbq (the grilling protocol), bbq-offload (another skill's questions), barbecue/churrasco alias stubs
 .claude-plugin/     plugin + marketplace manifests; .mcp.json is the plugin's pinned server entry
 test/               bun tests for state, protocol, hub and release manifests
 ```

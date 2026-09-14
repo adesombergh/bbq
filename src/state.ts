@@ -13,9 +13,10 @@ import type {
   Question,
   Round,
   Session,
+  SessionKind,
 } from "./types.ts"
 
-import { canAnswer, isComplete } from "./round-rules.ts"
+import { canAnswer, isComplete, sendsOnAnswer } from "./round-rules.ts"
 import { StateError } from "./state-error.ts"
 
 type Listener = (session: Session) => void
@@ -142,13 +143,18 @@ export class Store {
 
   /* ---------- sessions ---------- */
 
-  createSession(title: string, shortTitle?: string): Session {
+  createSession(
+    title: string,
+    shortTitle?: string,
+    kind: SessionKind = "grilling"
+  ): Session {
     // A blank short title is no short title: the full one is the fallback.
     const short = shortTitle?.trim()
     const session: Session = {
       asides: [],
       createdAt: Date.now(),
       id: newId("s"),
+      kind,
       notes: [],
       rounds: [],
       shortTitle: shorten(short === undefined || short === "" ? title : short),
@@ -273,6 +279,10 @@ export class Store {
       throw new StateError("Answer the previous questions first")
     }
     round.answers[questionId] = resolveAnswer(question, answer)
+    if (sendsOnAnswer(session, round)) {
+      round.status = "submitted"
+      round.submittedAt = Date.now()
+    }
     this.emit(session)
     return round
   }

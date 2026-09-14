@@ -1,6 +1,14 @@
-import type { Answer, AsideKind, ClientMessage, Session } from "@shared/types"
+import type {
+  Answer,
+  AsideKind,
+  ClientMessage,
+  Round,
+  Session,
+} from "@shared/types"
 
 import { useMutation, useQueryClient } from "@tanstack/react-query"
+
+import { sendsOnAnswer } from "@shared/round-rules"
 
 import { sessionKey, sessionQueryOptions } from "./session-query"
 import { getConnection } from "./session-socket"
@@ -20,10 +28,14 @@ function optimistic(session: Session, message: ClientMessage): Session {
         return { ...round, status: "submitted", submittedAt: Date.now() }
       }
       const answer: Answer = { ...message.answer, answeredAt: Date.now() }
-      return {
+      const answered: Round = {
         ...round,
         answers: { ...round.answers, [message.questionId]: answer },
       }
+      // The Store sends an offload round on its completing answer; so do we.
+      return sendsOnAnswer(session, answered)
+        ? { ...answered, status: "submitted", submittedAt: Date.now() }
+        : answered
     }),
   }
 }
