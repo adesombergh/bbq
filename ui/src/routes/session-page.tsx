@@ -182,6 +182,7 @@ export const SessionPage = () => {
                       panelQuestionId={panelQ}
                       pick={pick}
                       round={item.round}
+                      sessionKind={session.kind}
                     />
                   )}
                 </div>

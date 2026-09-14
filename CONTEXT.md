@@ -7,8 +7,16 @@ A grilling is a relentless, multi-round interview in which Claude stress-tests a
 ### The interview
 
 **Session**:
-One grilling of one plan, from the first round to the shared understanding. A session is either open or closed.
+One grilling of one plan, from the first round to the shared understanding — or, for an **offload**, the stretch of another skill's run whose questions are asked in the browser. A session is either open or closed.
 _Avoid_: conversation, chat, interview
+
+**Session kind**:
+What a session is for, fixed when it opens: a grilling, or an **offload**. Everything this glossary says about the frontier, the shared understanding and the destination is true of a grilling only.
+_Avoid_: session type, flavour, mode
+
+**Offload**:
+A session that carries the questions of whatever skill Claude is already running — a brainstorming, a custom interview — while that skill's own flow stays in the terminal. Questions arrive one at a time as the skill asks them, a round sends itself on the answer that completes it, and the running skill, not bbq, owns the ending: an offload has no frontier, no last round and no destination.
+_Avoid_: delegate, proxy, passthrough, questions mode
 
 **Mode**:
 Whether a session also tends the project's documents. Grill-me is the interview alone; grill-with-docs reads the glossary and the decision records to ground its questions, and writes new terms and decisions as they settle.
@@ -39,7 +47,7 @@ The end state of a session: a summary of every settled decision that the person 
 _Avoid_: conclusion, spec
 
 **Destination**:
-Where a confirmed plan goes when the session ends. Four exist and the set never changes: Claude's hands, `/implement`, `/to-spec`, `/to-tickets`. A destination is chosen by the same press that confirms the shared understanding, so it is an ordinary **answer** and nothing about it reaches the Store, the protocol or a **snapshot**. Three of the four are commands only the person can type; choosing one tells Claude what to set them up for, never what to start.
+Where a confirmed plan goes when a grilling ends; an offload has none. Four exist and the set never changes: Claude's hands, `/implement`, `/to-spec`, `/to-tickets`. A destination is chosen by the same press that confirms the shared understanding, so it is an ordinary **answer** and nothing about it reaches the Store, the protocol or a **snapshot**. Three of the four are commands only the person can type; choosing one tells Claude what to set them up for, never what to start.
 _Avoid_: hand-off, next step, export, outcome
 
 ### Inside a round

@@ -20,6 +20,8 @@ Lint runs with zero suppressions. Do not add an `oxlint-suppressions.json`, do n
 
 Claude talks to state (`src/state.ts`); state and the browser talk over WebSocket (`src/hub.ts`). MCP tools (`src/mcp.ts`) only read/mutate the Store and `waitFor` changes. The browser sends validated `ClientMessage`s (`src/protocol.ts`) and receives whole `Session` snapshots. Pure rules shared by both sides live in `src/round-rules.ts`; shared types in `src/types.ts` (the UI imports both as `@shared/*`).
 
+A session has a **kind**, `grilling` or `offload` (`docs/adr/0021`). The two share every tool and Store rule except where the kind says otherwise: the next-step prose a tool result carries lives in `src/tool-prose.ts` keyed by kind, and `sendsOnAnswer` in `src/round-rules.ts` is the one round rule that differs. `skills/bbq` is the grilling protocol, `skills/bbq-offload` the offload one; never let one skill describe both.
+
 Hard constraints from the README still hold: stdout belongs to MCP (log with `console.error`), the server never spawns Vite, `ui/dist` is prebuilt and gitignored, every `wait_*` tool returns before its timeout.
 
 ## UI rules the linter cannot fully express

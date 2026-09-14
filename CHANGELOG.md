@@ -6,6 +6,16 @@ All notable changes to this project are documented here. The format is
 
 ## [Unreleased]
 
+### Added
+
+- `bbq-offload` skill and an **offload** session kind: whatever skill Claude is
+  running (`superpowers:brainstorming`, a wrapper around it, a custom interview)
+  keeps its flow in the terminal while its questions are asked in the browser,
+  one at a time. The running skill owns the ending — no frontier, no last round,
+  no destinations. `open_session` takes an optional `kind`
+  (`grilling` by default), the next-step prose in tool results follows it, and
+  an offload round sends itself on the answer that completes it (ADR 0021).
+
 ## [0.1.0] - 2026-09-11
 
 First public release.

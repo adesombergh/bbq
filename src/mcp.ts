@@ -10,7 +10,7 @@
  * MAX_WAIT_MS). `wait_for_answers` returns `pending` on timeout and Claude
  * simply calls it again. Rounds can therefore sit open for hours.
  */
-import type { Answer, Aside, Round, Session } from "./types.ts"
+import type { Aside, Round, Session } from "./types.ts"
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js"
 
 import path from "node:path"
@@ -26,7 +26,8 @@ import { startHub } from "./hub.ts"
 import { answeredCount } from "./round-rules.ts"
 import { StateError } from "./state-error.ts"
 import { Store } from "./state.ts"
-import { ASIDE_KINDS } from "./types.ts"
+import { answeredReport, closedReport, openedNextStep } from "./tool-prose.ts"
+import { ASIDE_KINDS, SESSION_KINDS } from "./types.ts"
 
 function log(...args: unknown[]): void {
   console.error("[bbq]", ...args)
@@ -95,35 +96,6 @@ function questionSummary(round: Round, questionId: string): string {
   return `Q${position} [${question.id}] — ${question.title}\n${question.body}${options}\nRecommendation: ${question.recommendation}`
 }
 
-function describeAnswer(answer: Answer): string {
-  switch (answer.kind) {
-    case "recommended": {
-      return "went with your recommendation"
-    }
-    case "option": {
-      return `picked option (${answer.optionId ?? "?"})`
-    }
-    case "text": {
-      return "wrote a manual answer"
-    }
-    default: {
-      return "answered"
-    }
-  }
-}
-
-function formatAnswers(round: Round): string {
-  return round.questions
-    .map((q, i) => {
-      const answer = round.answers[q.id]
-      if (!answer) {
-        return `Q${i + 1} ${q.title}: (unanswered)`
-      }
-      return `Q${i + 1} ${q.title} → ${answer.text}\n   (${describeAnswer(answer)})`
-    })
-    .join("\n")
-}
-
 const FORMAT_RULE =
   'Pick the format that matches what you produced: "markdown" for prose, code, tables or a ```mermaid diagram; ' +
   '"html" for a fragment with inline CSS and no scripts or external resources, which renders in a sandboxed frame. ' +
@@ -183,20 +155,6 @@ function pendingReport(session: Session, round: Round): string {
   ].join("\n")
 }
 
-function answeredReport(round: Round): string {
-  return [
-    "outcome: answered",
-    `round: ${round.index}`,
-    "",
-    formatAnswers(round),
-    "",
-    "Next: recompute the frontier. If it is non-empty, ask_round again. If it is empty, run the last round: post_note " +
-      "the full shared understanding, then ask ONE short question whose options are the four destinations — Just send " +
-      "to Claude / /implement / /to-spec / /to-tickets — then close_session. The skill's 'The last round' section has " +
-      "the rest: which to recommend, and what to do with the answer.",
-  ].join("\n")
-}
-
 /* ---------- server ---------- */
 
 const server = new McpServer({ name: pkg.name, version: pkg.version })
@@ -206,8 +164,15 @@ server.registerTool(
   {
     description:
       "Start a bbq session and open the browser UI. Blocks until a browser tab connects (at most waitForBrowserMs) " +
-      "and returns the sessionId and URL. Call once per grilling session, then use ask_round / wait_for_answers.",
+      "and returns the sessionId and URL. Call once per session, then use ask_round / wait_for_answers.",
     inputSchema: {
+      kind: z
+        .enum(SESSION_KINDS)
+        .optional()
+        .describe(
+          "'grilling' (default) runs the grilling skill in the browser and ends in its last round. 'offload' only " +
+            "carries the questions of the skill you are already running (bbq-offload); that skill owns the ending."
+        ),
       shortTitle: z
         .string()
         .min(1)
@@ -218,7 +183,9 @@ server.registerTool(
       title: z
         .string()
         .min(1)
-        .describe("What is being grilled, e.g. 'Payment retry design'"),
+        .describe(
+          "What is being grilled, or what the offloading skill works on, e.g. 'Payment retry design'"
+        ),
       waitForBrowserMs: z
         .number()
         .int()
@@ -228,10 +195,10 @@ server.registerTool(
           `How long to wait for a browser to connect (default ${DEFAULT_BROWSER_WAIT_MS}, max ${MAX_WAIT_MS})`
         ),
     },
-    title: "Open a grilling session in the browser",
+    title: "Open a bbq session in the browser",
   },
-  guard(async ({ title, shortTitle, waitForBrowserMs }) => {
-    const session = store.createSession(title, shortTitle)
+  guard(async ({ title, shortTitle, kind, waitForBrowserMs }) => {
+    const session = store.createSession(title, shortTitle, kind)
     const url = hub.urlFor(session.id)
     const opened = openBrowser(url)
     log(`session ${session.id} at ${url}`)
@@ -252,12 +219,7 @@ server.registerTool(
           : "Could not launch a browser automatically. Give the user the URL above to open manually."
       )
     }
-    lines.push(
-      "",
-      "Next: run the grilling skill as usual, but instead of printing a round, call ask_round with the frontier " +
-        "(numbered questions with title, body, options if any, and your recommendation), then loop on wait_for_answers " +
-        "until it returns outcome: answered. Keep terminal output minimal; the browser is the conversation surface."
-    )
+    lines.push("", openedNextStep(session.kind))
     return text(lines.join("\n"))
   })
 )
@@ -298,7 +260,7 @@ server.registerTool(
   "ask_round",
   {
     description:
-      "Publish one grilling round (the current frontier). Returns immediately with the roundId. Only one round can be " +
+      "Publish one round of questions (a grilling's frontier, or the next question of an offload). Returns immediately with the roundId. Only one round can be " +
       "open at a time. Follow with wait_for_answers.",
     inputSchema: {
       intro: z
@@ -362,14 +324,14 @@ server.registerTool(
     }
     switch (outcome.kind) {
       case "closed": {
-        return text("outcome: closed\nThe session was closed.")
+        return text(closedReport(session.kind))
       }
       case "aside": {
         store.claimAside(sessionId, outcome.aside.id)
         return text(asideInstruction(session, outcome.aside))
       }
       case "answered": {
-        return text(answeredReport(outcome.round))
+        return text(answeredReport(outcome.round, session.kind))
       }
       default: {
         return fail("Unknown outcome")

@@ -1,4 +1,10 @@
-import type { Answer, Aside, AsideKind, Round } from "@shared/types"
+import type {
+  Answer,
+  Aside,
+  AsideKind,
+  Round,
+  SessionKind,
+} from "@shared/types"
 
 import { answeredCount, canAnswer, isComplete } from "@shared/round-rules"
 import { ArrowRight } from "lucide-react"
@@ -10,6 +16,8 @@ import { Button } from "@/components/ui/button"
 
 interface RoundViewProps {
   round: Round
+  /** An offload round sends itself on its last answer, so it has no send button. */
+  sessionKind: SessionKind
   activeQuestionId: string | undefined
   pick: string | undefined
   panelQuestionId: string | undefined
@@ -24,6 +32,7 @@ interface RoundViewProps {
 
 export const RoundView = ({
   round,
+  sessionKind,
   activeQuestionId,
   pick,
   panelQuestionId,
@@ -94,7 +103,7 @@ export const RoundView = ({
         ))}
       </div>
 
-      {open ? (
+      {open && sessionKind === "grilling" ? (
         <div className="flex items-center justify-end gap-3 pt-1">
           {complete ? null : (
             <span className="text-xs text-muted-foreground">

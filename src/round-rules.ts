@@ -26,6 +26,16 @@ export function isComplete(round: Round): boolean {
   return round.questions.every((q) => round.answers[q.id] !== undefined)
 }
 
+/**
+ * Offload auto-send: in an offload session the answer that completes an open
+ * round is also its send. A grilling round always waits for its own press.
+ */
+export function sendsOnAnswer(session: Session, round: Round): boolean {
+  return (
+    session.kind === "offload" && round.status === "open" && isComplete(round)
+  )
+}
+
 export function answeredCount(round: Round): number {
   return round.questions.filter((q) => round.answers[q.id] !== undefined).length
 }
