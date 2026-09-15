@@ -2,6 +2,11 @@
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
     "lib": ["ESNext"],
+    // `test/` imports the UI's pure modules across the packages (ADR 0016), and
+    // those spell the shared types the way the UI does.
+    "paths": {
+      "@shared/*": ["./src/*"]
+    },
     "types": ["bun"]
   },
   "include": ["src", "test", "scripts", "oxlint.config.ts", "oxfmt.config.ts"]
