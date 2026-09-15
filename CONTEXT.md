@@ -50,6 +50,10 @@ _Avoid_: conclusion, spec
 Where a confirmed plan goes when a grilling ends; an offload has none. Four exist and the set never changes: Claude's hands, `/implement`, `/to-spec`, `/to-tickets`. A destination is chosen by the same press that confirms the shared understanding, so it is an ordinary **answer** and nothing about it reaches the Store, the protocol or a **snapshot**. Three of the four are commands only the person can type; choosing one tells Claude what to set them up for, never what to start.
 _Avoid_: hand-off, next step, export, outcome
 
+**Debrief**:
+What a session shows once it is closed: a short, honest account of how it went. A record and not a scoreboard — every number in it was chosen because it says something about the session, not because it flatters. Most of it is derived from the **snapshot** and so reads the same in any **tab**; the part that is not — how long the person was **away**, how long they spent on the **pastime** — is watched by one page and shown only when that page has been open since the session started. Like the pastime, a debrief reaches no Store, no protocol and no snapshot, and Claude never receives one.
+_Avoid_: statistics, stats, summary, scorecard
+
 ### Inside a round
 
 **Question**:
@@ -127,6 +131,10 @@ _Avoid_: waiting state, idle, downtime, dead time
 **Pastime**:
 The small game the browser offers during a lull, to pass the time and nothing more. It belongs to the browser and not to the grilling: it never reaches the Store, the protocol or a snapshot, and it ends the instant a round opens. Snake is today's only pastime, and the word stays for the slot rather than for the game in it.
 _Avoid_: game, minigame, easter egg, feature
+
+**Away**:
+The stretch a **tab** spent off screen, as that tab alone can see it. It is the third point of view on the same time: a **wait** is Claude's bounded pause, a **lull** is the person's side of it, and away is whether the person was there for it at all. Being hidden is the whole of it — a tab sitting visible beside an editor counts as present — and it is counted by watching rather than by knowing, so it lives in one page's memory and starts again from zero on a reload.
+_Avoid_: idle, absent, AFK, inactive
 
 ### The machinery
 

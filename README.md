@@ -190,6 +190,13 @@ before answers so the user is never left staring at a spinner.
 - The active card shows three separated blocks: question, options
   (+ manual answer textarea), recommendation (+ _Go with recommendation_, and the
   three aside buttons).
+- A closed session shows its **debrief** where the round would be: rounds,
+  questions and elapsed time as tiles, then how often you took the
+  recommendation, wrote your own answer and asked for an aside. A tab that has
+  been open since the session started also reports how long you were away from
+  it and how long you spent on the pastime; a tab that joined late leaves that
+  block out rather than reporting a share of a session it did not see. All of
+  it is derived in the browser — Claude never receives it.
 - The right panel is per question, tabbed by aside kind, closable (Esc).
   `markdown` asides render as rich text; `html` asides render in a sandboxed
   frame (no scripts). Claude picks the format per aside — the kind does not fix

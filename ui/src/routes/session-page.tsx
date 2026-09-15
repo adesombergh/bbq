@@ -8,6 +8,7 @@ import { AlertTriangle } from "lucide-react"
 import { useDefaultLayout } from "react-resizable-panels"
 
 import { AsidePanel } from "@/components/aside-panel"
+import { Debrief } from "@/components/debrief"
 import { NoteBubble } from "@/components/note-bubble"
 import { PastimeBoard } from "@/components/pastime-board"
 import { RoundView } from "@/components/round-view"
@@ -57,11 +58,7 @@ const Lull = ({ message }: { message: string }) => (
 
 const SessionFooter = ({ session }: { session: Session }) => {
   if (session.status === "closed") {
-    return (
-      <div className="rounded-lg border bg-secondary p-4 text-center text-muted-foreground">
-        Session closed. You can keep this tab for reference.
-      </div>
-    )
+    return <Debrief session={session} />
   }
   if (openRound(session) === undefined && session.rounds.length > 0) {
     return <Lull message="Claude is thinking about the next round…" />
