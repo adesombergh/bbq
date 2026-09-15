@@ -1,5 +1,6 @@
 import type { AsideKind, Session } from "@shared/types"
 
+import { useSyncExternalStore } from "react"
 import { useSuspenseQuery } from "@tanstack/react-query"
 import { getRouteApi } from "@tanstack/react-router"
 import { useSelector } from "@tanstack/react-store"
@@ -31,6 +32,7 @@ import {
   panelTab,
   timeline,
 } from "@/lib/derive"
+import { getLullSettled, subscribeLullSettled } from "@/lib/lull"
 import { messages, useSendMessage } from "@/lib/session-mutations"
 import { sessionQueryOptions } from "@/lib/session-query"
 import { getConnection } from "@/lib/session-socket"
@@ -44,17 +46,23 @@ const scrollIntoView = (node: HTMLDivElement | null): void => {
 
 /**
  * A lull: no round is open, so nothing is expected of the person. The line says
- * what we are waiting for and the pastime is there to pass the time.
+ * what we are waiting for and the pastime is there to pass the time — once the
+ * lull has lasted long enough to be one (`lib/lull.ts`). The wait between the
+ * last answer and the session closing is too short to put a board on screen.
  */
-const Lull = ({ message }: { message: string }) => (
-  <div className="space-y-3">
-    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-      <span className="inline-block size-2 animate-pulse rounded-full bg-primary" />
-      {message}
+const Lull = ({ message }: { message: string }) => {
+  const settled = useSyncExternalStore(subscribeLullSettled, getLullSettled)
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <span className="inline-block size-2 animate-pulse rounded-full bg-primary" />
+        {message}
+      </div>
+      {settled ? <PastimeBoard /> : null}
     </div>
-    <PastimeBoard />
-  </div>
-)
+  )
+}
 
 const SessionFooter = ({ session }: { session: Session }) => {
   if (session.status === "closed") {

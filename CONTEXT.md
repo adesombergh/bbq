@@ -129,7 +129,7 @@ The stretch of a session with no open round, when nothing is expected of the per
 _Avoid_: waiting state, idle, downtime, dead time
 
 **Pastime**:
-The small game the browser offers during a lull, to pass the time and nothing more. It belongs to the browser and not to the grilling: it never reaches the Store, the protocol or a snapshot, and it ends the instant a round opens. Snake is today's only pastime, and the word stays for the slot rather than for the game in it.
+The small game the browser offers during a lull, to pass the time and nothing more. It arrives a few seconds in, so a lull too short to be one — the gap between the last answer and the session closing — passes without a board. It belongs to the browser and not to the grilling: it never reaches the Store, the protocol or a snapshot, and it ends the instant a round opens. Snake is today's only pastime, and the word stays for the slot rather than for the game in it.
 _Avoid_: game, minigame, easter egg, feature
 
 **Away**:
