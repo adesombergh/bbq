@@ -161,23 +161,27 @@ Claude ──MCP stdio──▶ src/mcp.ts ──▶ Store (src/state.ts) ◀─
 
 ### Tools
 
-| tool                                                   | blocks?                                                  | purpose                                                             |
-| ------------------------------------------------------ | -------------------------------------------------------- | ------------------------------------------------------------------- |
-| `open_session({ title, kind? })`                       | until a tab connects (≤ `waitForBrowserMs`, default 30s) | start a `grilling` (default) or `offload` session, open the browser |
-| `ask_round({ sessionId, intro?, questions })`          | no                                                       | publish one round: a frontier, or an offloaded question             |
-| `wait_for_answers({ sessionId, roundId, timeoutMs? })` | ≤ `timeoutMs`                                            | poll; returns `answered` / `aside_requested` / `pending` / `closed` |
-| `post_aside({ sessionId, asideId, format, content })`  | no                                                       | deliver a Wait-what / Show-me / ELI5 result to the panel            |
-| `post_note({ sessionId, markdown })`                   | no                                                       | chat bubble between rounds                                          |
-| `close_session({ sessionId })`                         | no                                                       | mark the session finished                                           |
+| tool                                                   | blocks?                                                  | purpose                                                                              |
+| ------------------------------------------------------ | -------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| `open_session({ title, kind? })`                       | until a tab connects (≤ `waitForBrowserMs`, default 30s) | start a `grilling` (default) or `offload` session, open the browser                  |
+| `ask_round({ sessionId, intro?, questions })`          | no                                                       | publish one round: a frontier, or an offloaded question                              |
+| `wait_for_answers({ sessionId, roundId, timeoutMs? })` | ≤ `timeoutMs`                                            | poll; returns `answered` / `aside_requested` / `disconnected` / `pending` / `closed` |
+| `post_aside({ sessionId, asideId, format, content })`  | no                                                       | deliver a Wait-what / Show-me / ELI5 result to the panel                             |
+| `post_note({ sessionId, markdown })`                   | no                                                       | chat bubble between rounds                                                           |
+| `close_session({ sessionId })`                         | no                                                       | mark the session finished                                                            |
 
 ### Polling contract
 
 No tool ever blocks past its timeout. `wait_for_answers` waits at most
-`timeoutMs` (default 55s via `BBQ_WAIT_MS`, hard cap 280s: under Claude
+`timeoutMs` (default 240s via `BBQ_WAIT_MS`, hard cap 280s: under Claude
 Code's 5-minute MCP idle cutoff) and returns `pending` on timeout. Claude just
-calls it again, so a round can sit open for an hour at the cost of one cheap
-tool call per minute. Asides interrupt the wait immediately and are returned
-before answers so the user is never left staring at a spinner.
+calls it again, so a round can sit open for an hour at the cost of a handful of
+tool calls. The default is long because every event worth waking for resolves
+the wait early: an answer, an aside, a close, and the last browser tab going
+away (`disconnected`). Asides in particular interrupt the wait immediately and
+are returned before answers so the user is never left staring at a spinner. A
+poll that finds nothing is two lines, because it is the result a session
+repeats most.
 
 ### UI rules
 
