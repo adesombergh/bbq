@@ -8,7 +8,10 @@
  *
  * Polling contract: no tool blocks longer than its `timeoutMs` (capped by
  * MAX_WAIT_MS). `wait_for_answers` returns `pending` on timeout and Claude
- * simply calls it again. Rounds can therefore sit open for hours.
+ * simply calls it again. Rounds can therefore sit open for hours. The default
+ * poll is long on purpose: every event worth waking for — an answer, an aside,
+ * a close, the tab going away — resolves the wait early, so a short poll would
+ * only buy wakeups that find nothing (ADR 0002).
  */
 import type { Aside, Round, Session } from "./types.ts"
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js"
@@ -20,13 +23,18 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { z } from "zod"
 
 import pkg from "../package.json" with { type: "json" }
-import { ASIDE_BRIEFS, briefStep } from "./aside-brief.ts"
 import { openBrowser } from "./browser.ts"
 import { startHub } from "./hub.ts"
-import { answeredCount } from "./round-rules.ts"
 import { StateError } from "./state-error.ts"
 import { Store } from "./state.ts"
-import { answeredReport, closedReport, openedNextStep } from "./tool-prose.ts"
+import {
+  answeredReport,
+  asideInstruction,
+  closedReport,
+  disconnectedReport,
+  openedNextStep,
+  pendingReport,
+} from "./tool-prose.ts"
 import { ASIDE_KINDS, SESSION_KINDS } from "./types.ts"
 
 function log(...args: unknown[]): void {
@@ -34,7 +42,7 @@ function log(...args: unknown[]): void {
 }
 
 /** Default poll length. Override with BBQ_WAIT_MS. */
-const DEFAULT_WAIT_MS = Number(process.env.BBQ_WAIT_MS ?? 55_000)
+const DEFAULT_WAIT_MS = Number(process.env.BBQ_WAIT_MS ?? 240_000)
 /** Hard cap: stays under Claude Code's 5 min idle cutoff with margin. */
 const MAX_WAIT_MS = 280_000
 const MIN_WAIT_MS = 1000
@@ -77,57 +85,23 @@ function guard<Args>(
   }
 }
 
-function questionSummary(round: Round, questionId: string): string {
-  const question = round.questions.find((q) => q.id === questionId)
-  if (!question) {
-    throw new StateError(`Unknown question ${questionId}`)
-  }
-  const options =
-    question.options.length > 0
-      ? `\nOptions:\n${question.options
-          .map((o) => {
-            const detail =
-              o.description === undefined ? "" : ` — ${o.description}`
-            return `  - (${o.id}) ${o.label}${detail}`
-          })
-          .join("\n")}`
-      : "\n(open question, no fixed options)"
-  const position = round.questions.indexOf(question) + 1
-  return `Q${position} [${question.id}] — ${question.title}\n${question.body}${options}\nRecommendation: ${question.recommendation}`
-}
-
-const FORMAT_RULE =
-  'Pick the format that matches what you produced: "markdown" for prose, code, tables or a ```mermaid diagram; ' +
-  '"html" for a fragment with inline CSS and no scripts or external resources, which renders in a sandboxed frame. ' +
-  "Deliver it through post_aside — never write a file, never open one."
-
-function asideInstruction(session: Session, aside: Aside): string {
-  const round = session.rounds.find((r) => r.id === aside.roundId)
-  if (!round) {
-    throw new StateError(`Unknown round ${aside.roundId}`)
-  }
-  const spec = ASIDE_BRIEFS[aside.kind]
-  return [
-    "outcome: aside_requested",
-    `The user pressed "${aside.kind}" on the question below and is waiting in the browser.`,
-    "",
-    questionSummary(round, aside.questionId),
-    "",
-    "Do this now:",
-    `1. ${briefStep(spec)}`,
-    `2. ${FORMAT_RULE}`,
-    `3. Post the result with post_aside({ sessionId: "${session.id}", asideId: "${aside.id}", format, content }).`,
-    "4. Call wait_for_answers again for the round.",
-    "Do not answer in the terminal; the user is looking at the browser.",
-  ].join("\n")
-}
-
 type Outcome =
   | { kind: "answered"; round: Round }
   | { kind: "aside"; aside: Aside }
   | { kind: "closed" }
+  | { kind: "disconnected" }
 
-function outcomeFor(session: Session, roundId: string): Outcome | undefined {
+/**
+ * What ends a wait. `hadTab` is the tab count when the wait started: losing the
+ * last tab is an outcome, but a session that was already tabless is not, or a
+ * wait on a closed tab would return the instant it was called and Claude would
+ * spin. It waits out its timeout instead and says so in the pending report.
+ */
+function outcomeFor(
+  session: Session,
+  roundId: string,
+  hadTab: boolean
+): Outcome | undefined {
   if (session.status === "closed") {
     return { kind: "closed" }
   }
@@ -139,20 +113,10 @@ function outcomeFor(session: Session, roundId: string): Outcome | undefined {
   if (round?.status === "submitted") {
     return { kind: "answered", round }
   }
+  if (hadTab && session.tabs === 0) {
+    return { kind: "disconnected" }
+  }
   return undefined
-}
-
-function pendingReport(session: Session, round: Round): string {
-  const hint =
-    session.tabs === 0
-      ? `No browser is connected. The user may have closed the tab; the URL is ${hub.urlFor(session.id)}.`
-      : "The user is still working. Call wait_for_answers again."
-  return [
-    "outcome: pending",
-    `progress: ${answeredCount(round)}/${round.questions.length} answered (not submitted yet)`,
-    `tabs: ${session.tabs}`,
-    hint,
-  ].join("\n")
 }
 
 /* ---------- server ---------- */
@@ -163,37 +127,35 @@ server.registerTool(
   "open_session",
   {
     description:
-      "Start a bbq session and open the browser UI. Blocks until a browser tab connects (at most waitForBrowserMs) " +
-      "and returns the sessionId and URL. Call once per session, then use ask_round / wait_for_answers.",
+      "Start a bbq session and open the browser UI. Blocks until a tab connects (at most waitForBrowserMs) and " +
+      "returns the sessionId and url. Once per session, then ask_round / wait_for_answers.",
     inputSchema: {
       kind: z
         .enum(SESSION_KINDS)
         .optional()
         .describe(
-          "'grilling' (default) runs the grilling skill in the browser and ends in its last round. 'offload' only " +
-            "carries the questions of the skill you are already running (bbq-offload); that skill owns the ending."
+          "'grilling' (default) runs the grilling skill in the browser; 'offload' only carries the questions of " +
+            "the skill you are already running, which owns the ending."
         ),
       shortTitle: z
         .string()
         .min(1)
         .optional()
         .describe(
-          "Two to four words for the browser tab, e.g. 'Payment retries'. Defaults to `title`; truncated if long."
+          "Two to four words for the browser tab. Defaults to `title`."
         ),
       title: z
         .string()
         .min(1)
         .describe(
-          "What is being grilled, or what the offloading skill works on, e.g. 'Payment retry design'"
+          "What is being grilled, or what the offloading skill works on"
         ),
       waitForBrowserMs: z
         .number()
         .int()
         .positive()
         .optional()
-        .describe(
-          `How long to wait for a browser to connect (default ${DEFAULT_BROWSER_WAIT_MS}, max ${MAX_WAIT_MS})`
-        ),
+        .describe(`Default ${DEFAULT_BROWSER_WAIT_MS}, max ${MAX_WAIT_MS}`),
     },
     title: "Open a bbq session in the browser",
   },
@@ -225,18 +187,12 @@ server.registerTool(
 )
 
 const questionSchema = z.object({
-  body: z
-    .string()
-    .min(1)
-    .describe("The question, markdown. Can be several paragraphs."),
+  body: z.string().min(1).describe("The question, markdown"),
   id: z.string().optional().describe("Stable id; defaults to r<round>q<n>"),
   options: z
     .array(
       z.object({
-        description: z
-          .string()
-          .optional()
-          .describe("One-line explanation / trade-off (markdown)"),
+        description: z.string().optional().describe("One-line trade-off"),
         id: z.string().optional().describe("Defaults to a, b, c…"),
         label: z.string().min(1),
       })
@@ -250,9 +206,7 @@ const questionSchema = z.object({
   recommendedOptionId: z
     .string()
     .optional()
-    .describe(
-      "If the recommendation is one of the options, its id, so 'Go with recommended' can select it"
-    ),
+    .describe("The option the recommendation picks, if it is one of them"),
   title: z.string().min(1).describe("Short title, e.g. 'Transport'"),
 })
 
@@ -260,14 +214,14 @@ server.registerTool(
   "ask_round",
   {
     description:
-      "Publish one round of questions (a grilling's frontier, or the next question of an offload). Returns immediately with the roundId. Only one round can be " +
-      "open at a time. Follow with wait_for_answers.",
+      "Publish one round of questions: a grilling's frontier, or the next question of an offload. Returns the " +
+      "roundId. Only one round open at a time; follow with wait_for_answers.",
     inputSchema: {
       intro: z
         .string()
         .optional()
         .describe(
-          "Optional short intro for the round (markdown), e.g. what the last answers settled"
+          "Short intro for the round (markdown), e.g. what the last answers settled"
         ),
       questions: z.array(questionSchema).min(1),
       sessionId: z.string(),
@@ -291,10 +245,9 @@ server.registerTool(
   "wait_for_answers",
   {
     description:
-      "Block until something happens on the round, for at most timeoutMs. Returns one of: " +
-      "`answered` (round submitted; answers included), `aside_requested` (user pressed Wait what / Show me / ELI5 on a " +
-      "question: produce the aside, post_aside it, then call this again), `pending` (timeout; call again), " +
-      "`closed` (session closed). Never blocks past timeoutMs, so it is safe to call in a loop.",
+      "Block until something happens on the round, at most timeoutMs. Returns `answered` (answers included), " +
+      "`aside_requested` (produce the aside, post_aside it, call again), `disconnected` (tab closed), `pending` " +
+      "(timeout; call again) or `closed`. Never blocks past timeoutMs, so it is safe to loop on.",
     inputSchema: {
       roundId: z.string(),
       sessionId: z.string(),
@@ -303,28 +256,33 @@ server.registerTool(
         .int()
         .positive()
         .optional()
-        .describe(
-          `Max block time (default ${DEFAULT_WAIT_MS}, cap ${MAX_WAIT_MS})`
-        ),
+        .describe(`Default ${DEFAULT_WAIT_MS}, cap ${MAX_WAIT_MS}`),
     },
     title: "Wait for the user (poll)",
   },
   guard(async ({ sessionId, roundId, timeoutMs }) => {
     // Validate the round before waiting on it.
     store.getRound(sessionId, roundId)
+    const hadTab = store.get(sessionId).tabs > 0
     const outcome = await store.waitFor(
       sessionId,
-      (s) => outcomeFor(s, roundId),
+      (s) => outcomeFor(s, roundId, hadTab),
       clampWait(timeoutMs, DEFAULT_WAIT_MS)
     )
 
     const session = store.get(sessionId)
+    const url = hub.urlFor(sessionId)
     if (!outcome) {
-      return text(pendingReport(session, store.getRound(sessionId, roundId)))
+      return text(
+        pendingReport(session, store.getRound(sessionId, roundId), url)
+      )
     }
     switch (outcome.kind) {
       case "closed": {
         return text(closedReport(session.kind))
+      }
+      case "disconnected": {
+        return text(disconnectedReport(store.getRound(sessionId, roundId), url))
       }
       case "aside": {
         store.claimAside(sessionId, outcome.aside.id)
@@ -344,9 +302,9 @@ server.registerTool(
   "post_aside",
   {
     description:
-      "Send the content produced for an aside request into the contextual panel of the browser. " +
-      "format 'markdown' renders as rich text, and a ```mermaid block in it is drawn as a diagram; " +
-      "'html' renders in a sandboxed frame (inline SVG/CSS ok, no scripts). The format is yours to pick per aside.",
+      "Send the content produced for an aside into the browser's contextual panel. 'markdown' renders as rich " +
+      "text and draws a ```mermaid block as a diagram; 'html' renders in a sandboxed frame (inline SVG/CSS, no " +
+      "scripts). Pick the format per aside.",
     inputSchema: {
       asideId: z.string(),
       content: z.string().min(1),
@@ -371,8 +329,8 @@ server.registerTool(
   "post_note",
   {
     description:
-      "Show a free-form markdown message in the browser chat (between rounds): what the last answers settled, a summary " +
-      "of the shared understanding, or a status like 'looking something up'.",
+      "Show a free-form markdown message in the browser chat, between rounds: what the last answers settled, the " +
+      "shared understanding, or a status like 'looking something up'.",
     inputSchema: { markdown: z.string().min(1), sessionId: z.string() },
     title: "Post a message in the chat column",
   },
@@ -386,7 +344,7 @@ server.registerTool(
   "close_session",
   {
     description:
-      "Mark the session finished. The browser shows a closed banner; the tab can stay open for reference.",
+      "Mark the session finished. The browser shows a closed banner; the tab can stay open.",
     inputSchema: { sessionId: z.string() },
     title: "Close the session",
   },

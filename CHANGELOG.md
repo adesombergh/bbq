@@ -16,6 +16,20 @@ All notable changes to this project are documented here. The format is
   (`grilling` by default), the next-step prose in tool results follows it, and
   an offload round sends itself on the answer that completes it (ADR 0021).
 
+### Changed
+
+- `wait_for_answers` polls every 240 s instead of 55 s, and returns a new
+  `disconnected` outcome the moment the last browser tab goes away, so the
+  longer wait costs no responsiveness. A poll that finds nothing is two lines
+  while a tab is connected, and spends words on the URL only when there is no
+  browser to answer in (ADR 0002).
+- Tool results teach the protocol once and recall it in one line afterwards:
+  the full next step on the first answered round, a single line on the ones
+  after it. An aside request names the options of its question instead of
+  re-describing them. Tool descriptions trimmed.
+- All tool-result prose moved from `src/mcp.ts` to `src/tool-prose.ts`, which
+  makes it testable; `src/mcp.ts` is wiring only.
+
 ## [0.1.0] - 2026-09-11
 
 First public release.
