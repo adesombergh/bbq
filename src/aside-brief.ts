@@ -36,7 +36,7 @@ export const ASIDE_BRIEFS: Record<
     brief:
       "Re-pitch this question so it lands: give a little context (why this decision matters now, what depends on it), " +
       "then restate the question, each option and your recommendation in ASD-STE100 Simplified Technical English: short " +
-      "sentences, one idea per sentence, common words, active voice. Use the project's ubiquitous language (CONTEXT.md if present). " +
+      "sentences, one idea per sentence, common words, active voice. Use the project's ubiquitous language (GLOSSARY.md if present). " +
       "Do not add new options. Keep it under ~250 words.",
   },
 }

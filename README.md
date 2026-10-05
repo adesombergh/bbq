@@ -99,7 +99,7 @@ Before the browser opens, Claude settles three things — asking only for what y
 did not already say when you invoked it:
 
 - **Mode** — `grill-me`, or `grill-with-docs` to also read this project's
-  `CONTEXT.md` and `docs/adr/` and write new terms and decisions as they settle.
+  `GLOSSARY.md` and `docs/adr/` and write new terms and decisions as they settle.
 - **Question budget** — a maximum number of questions, no maximum by default. It
   counts questions inside rounds; asides and the last round are free. Spent in
   full, Claude names what it did not get to and what it is assuming.
