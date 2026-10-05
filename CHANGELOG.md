@@ -18,6 +18,9 @@ All notable changes to this project are documented here. The format is
 
 ### Changed
 
+- `grill-with-docs` reads and writes the project's `GLOSSARY.md` instead of
+  `CONTEXT.md`; the **Wait what** brief points at it too.
+
 - `wait_for_answers` polls every 240 s instead of 55 s, and returns a new
   `disconnected` outcome the moment the last browser tab goes away, so the
   longer wait costs no responsiveness. A poll that finds nothing is two lines

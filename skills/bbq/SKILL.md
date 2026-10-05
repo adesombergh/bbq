@@ -14,12 +14,12 @@ entirely when the args answered it. None of the three reaches the server: they
 live here, in this file, and in your head for the length of the session.
 
 - **Mode** — `grill-me` or `grill-with-docs` (default `grill-me`). With-docs
-  means both halves: read `CONTEXT.md`, `docs/adr/` and `README.md` so the
+  means both halves: read `GLOSSARY.md`, `docs/adr/` and `README.md` so the
   questions use the project's ubiquitous language and never re-litigate a
   settled ADR, **and** run the `domain-modeling` skill throughout — challenge
-  terms, sharpen fuzzy language, and write `CONTEXT.md` entries the moment a
+  terms, sharpen fuzzy language, and write `GLOSSARY.md` entries the moment a
   term settles rather than batching them to the end. The glossary may lead the
-  code: a word the session agrees on belongs in `CONTEXT.md` even when nothing
+  code: a word the session agrees on belongs in `GLOSSARY.md` even when nothing
   implements it yet. Offer an ADR only when the three-part test passes.
 - **Question budget** — a maximum number of questions, default **no maximum**.
   It counts questions **inside rounds** only. Asides are free (they are the same
@@ -29,7 +29,7 @@ live here, in this file, and in your head for the length of the session.
   last round.
 - **Session language** — `english` or `french`, default `english`. Content only:
   questions, options, recommendations, notes and asides. The UI chrome,
-  `CONTEXT.md`, ADRs, code and commit messages stay English. **The session
+  `GLOSSARY.md`, ADRs, code and commit messages stay English. **The session
   language overrides any brief**, including the ones the tool results carry — an
   aside brief that prescribes Simplified Technical English is advice for the
   English case and does not apply to a French session.
