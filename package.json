@@ -57,7 +57,7 @@
     "lefthook": "^2.1.12",
     "oxfmt": "^0.67.0",
     "oxlint": "^1.82.0",
-    "oxlint-tsgolint": "^0.23.0",
+    "oxlint-tsgolint": "^7.0.2005",
     "typescript": "^7.0.2",
     "ultracite": "^7.11.1"
   },
